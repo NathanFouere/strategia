@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import Game from "@/components/Game.vue";
+import { RouterLink, RouterView } from 'vue-router'
 </script>
 
 <template>
-  <p>Salut</p>
-  <Game />
+
+  <RouterView />
 </template>

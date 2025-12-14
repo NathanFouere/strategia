@@ -1,0 +1,11 @@
+import { Container, inject, injectable } from 'inversify';
+import {WebSocketService} from "@/services/websocket.service.ts";
+import {COMMON_DEPENDENCY_TYPES} from "@/container/common.types.ts";
+
+const container: Container = new Container();
+
+container.bind<string>(COMMON_DEPENDENCY_TYPES.WebSocketUrl).toConstantValue("ws://localhost:8080/ws")
+container.bind(WebSocketService).toSelf();
+
+export default container;
+

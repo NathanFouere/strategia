@@ -1,18 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"server/internal/model"
-	"server/internal/ws_exchange"
-	"sync"
-	"time"
-
-	"github.com/gorilla/websocket"
+	"server/internal/container"
+	"server/internal/handler"
 )
 
-var upgrader = websocket.Upgrader{
+/*var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 var clients = make(map[*websocket.Conn]bool)
@@ -30,13 +24,14 @@ func wsHandler(w http.ResponseWriter, r *http.Request, g *model.Game) {
 	mutex.Lock()
 	clients[conn] = true
 	fmt.Println("New client_old:", conn.RemoteAddr())
-	player := model.InitPlayer(g)
+	player := model.InitPlayer("test")
 	g.AddPlayer(player)
 	mutex.Unlock()
 
 	// envoie du connexion exchange
 	connexionExchange := &ws_exchange.ConnexionExchange{
-		PlayerId: player.ID.String(),
+		PlayerId:     player.ID.String(),
+		PlayerPseudo: "gegegeggegeg",
 	}
 
 	data, err := json.Marshal(connexionExchange.ToWsExchange())
@@ -98,24 +93,33 @@ func update(g *model.Game) {
 		}
 	}
 	g.ResetState()
-}
+}*/
 
 func main() {
-	game := model.InitGame()
-	http.HandleFunc("/ws", makeWsHandler(game))
-	go handleMessages(game)
-	ticker := time.NewTicker(1 * time.Second)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				update(game)
-			}
-		}
-	}()
-	fmt.Println("Serveur WebSocket démarré sur :8080")
-	err := http.ListenAndServe(":8080", nil)
+	err := container.SetupContainer()
 	if err != nil {
-		fmt.Println("Error starting server:", err)
+		fmt.Println("error :", err)
 	}
+
+	err = container.GetContainer().Invoke(func(mainHandler *handler.MainHandler) {
+		mainHandler.Launch()
+	})
+
+	/*	game := model.InitGame()
+		http.HandleFunc("/ws", makeWsHandler(game))
+		go handleMessages(game)
+		ticker := time.NewTicker(1 * time.Second)
+		go func() {
+			for {
+				select {
+				case <-ticker.C:
+					update(game)
+				}
+			}
+		}()
+		fmt.Println("Serveur WebSocket démarré sur :8080")
+		err = http.ListenAndServe(":8080", nil)
+		if err != nil {
+			fmt.Println("Error starting server:", err)
+		}*/
 }

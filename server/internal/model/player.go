@@ -32,11 +32,15 @@ func getRandomColor() color.Color {
 	return colors[idx]
 }
 
-func InitPlayer(game *Game) *Player {
+func InitPlayer(pseudo string) *Player {
 	return &Player{
 		ID:     uuid.New(),
-		Pseudo: uuid.New().String(),
-		Game:   game,
+		Pseudo: pseudo,
+		Game:   nil,
 		Color:  getRandomColor(),
 	}
+}
+
+func (p *Player) AssignToGame(game *Game) {
+	p.Game = game
 }

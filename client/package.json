@@ -16,7 +16,9 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "inversify": "^7.10.6",
     "pinia": "^3.0.4",
+    "reflect-metadata": "^0.2.2",
     "vue": "^3.5.25",
     "vue-router": "^4.6.3"
   },

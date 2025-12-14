@@ -30,7 +30,7 @@ func (Game *Game) AddPlayer(player *Player) {
 	Game.Players = append(Game.Players, player)
 }
 
-func (game *Game) ReceivePixelClick(pixelClick *ws_exchange.PixelClickExchange) {
+func (game *Game) ReceivePixelClick(pixelClick *ws_exchange.PixelClickPayload) {
 	tile := fmt.Sprintf("%d-%d", pixelClick.X, pixelClick.Y)
 	game.TilesToRender[tile] = pixelClick.IdPlayer
 	game.TilesDict[tile] = pixelClick.IdPlayer
@@ -46,7 +46,7 @@ func (game *Game) findPlayerOfIdInGame(playerId uuid.UUID) (*Player, error) {
 	return nil, errors.New("player not found")
 }
 
-func (game *Game) generateServerUpdate() *ws_exchange.ServerUpdateModel {
+func (game *Game) generateServerUpdate() *ws_exchange.ServerUpdatePayload {
 	updates := []ws_exchange.ServerUpdateData{}
 	fmt.Println(game.TilesDict)
 	for key, val := range game.TilesDict {
@@ -74,7 +74,7 @@ func (game *Game) generateServerUpdate() *ws_exchange.ServerUpdateModel {
 		})
 	}
 
-	return &ws_exchange.ServerUpdateModel{
+	return &ws_exchange.ServerUpdatePayload{
 		ServerUpdateDatas: updates,
 	}
 }
