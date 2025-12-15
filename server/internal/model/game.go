@@ -29,6 +29,9 @@ func InitGame() *Game {
 func (Game *Game) AddPlayer(player *Player) {
 	Game.Players = append(Game.Players, player)
 }
+func (Game *Game) Start() {
+	fmt.Println("Game started !")
+}
 
 func (game *Game) ReceivePixelClick(pixelClick *ws_exchange.PixelClickPayload) {
 	tile := fmt.Sprintf("%d-%d", pixelClick.X, pixelClick.Y)

@@ -10,9 +10,9 @@ type ServerUpdatePayload struct {
 	ServerUpdateDatas []ServerUpdateData `json:"update_datas"`
 }
 
-func (serverUpdatePayload *ServerUpdatePayload) ToWsExchange() *WsExchangeTemplate {
-	return &WsExchangeTemplate{
+func (serverUpdatePayload *ServerUpdatePayload) ToWsExchange() *WsExchangeTemplate[*ServerUpdatePayload] {
+	return &WsExchangeTemplate[*ServerUpdatePayload]{
 		Type:    "server-update-datas",
-		Payload: serverUpdatePayload.ServerUpdateDatas,
+		Payload: serverUpdatePayload,
 	}
 }

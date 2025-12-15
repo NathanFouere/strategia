@@ -33,6 +33,12 @@ export class WebSocketService {
     this.callbackDict[type] = callback;
   }
 
+  public send<T>(message: WsExchangeTemplate<T>): void{
+    const serializedMessage = JSON.stringify(message);
+    console.log(serializedMessage);
+    this.ws.send(serializedMessage)
+  }
+
   public unsubscribe(type: string): void {
     if (this.callbackDict[type] === undefined) {
       throw new UndefinedCallbackError(type)

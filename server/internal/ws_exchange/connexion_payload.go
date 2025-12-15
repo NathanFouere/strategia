@@ -5,8 +5,8 @@ type ConnectionPayload struct {
 	PlayerPseudo string `json:"player_pseudo"`
 }
 
-func (connectionPayload *ConnectionPayload) ToWsExchange() *WsExchangeTemplate {
-	return &WsExchangeTemplate{
+func (connectionPayload *ConnectionPayload) ToWsExchange() *WsExchangeTemplate[*ConnectionPayload] {
+	return &WsExchangeTemplate[*ConnectionPayload]{
 		Type:    "connexion-exchange",
 		Payload: connectionPayload,
 	}

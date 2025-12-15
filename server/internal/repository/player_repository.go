@@ -25,6 +25,16 @@ func (pr *PlayerRepository) AddPlayer(pseudo string) {
 	pr.LoggedPlayers = append(pr.LoggedPlayers, newPlayer)
 }
 
+func (pr *PlayerRepository) GetPlayerFromId(uuid uuid.UUID) (*model.Player, error) {
+	for i := 0; i < len(pr.LoggedPlayers); i++ {
+		if pr.LoggedPlayers[i].ID == uuid {
+			return pr.LoggedPlayers[i], nil
+		}
+	}
+
+	return nil, errors.New("Couldn't find player of id " + uuid.String())
+}
+
 func (pr *PlayerRepository) RemovePlayer(uuid uuid.UUID) error {
 	// moche et gourmand mais marche pour le moment
 	for i := 0; i < len(pr.LoggedPlayers); i++ {
