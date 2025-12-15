@@ -9,6 +9,7 @@ import type WaitingGamePayload from "@/ws-exchange/waiting-game-payload.ts";
 import {usePendingGameStore} from "@/stores/pending-game.store.ts";
 import type GameSubscriptionPayload from "@/ws-exchange/game-subscription-payload.ts";
 import type {WsExchangeTemplate} from "@/ws-exchange/ws-exchange-template.ts";
+import router from "@/router";
 
 const playerStore = usePlayerStore();
 const pendingGameStore = usePendingGameStore();
@@ -28,10 +29,17 @@ const cb2 = (e: WaitingGamePayload) => {
   pendingGameStore.setPendingGameId(e.game_id);
   pendingGameStore.setSecondsBeforeLaunch(e.seconds_before_launch);
   pendingGameStore.setNumberOfWaitingPlayers(e.number_of_waiting_players);
-  pendingGameStore.setSubscribedToGame(e.is_player_waiting_for_game)
+  pendingGameStore.setGameLaunching(e.is_game_launching);
+  pendingGameStore.setSubscribedToGame(e.is_player_waiting_for_game);
 }
 
 websocketService.subscribe<WaitingGamePayload>("waiting_game_exchange", cb2)
+
+const cb3 = (_: WaitingGamePayload) => {
+  router.push('/game')
+}
+
+websocketService.subscribe<WaitingGamePayload>("redirect_to_game", cb3)
 
 // TODO => clarifier le fait que ça inscrive ET desinscrive
 function sendSubscriptionToGame(): void {
@@ -53,6 +61,8 @@ function sendSubscriptionToGame(): void {
 </script>
 
 <template>
+  {{pendingGameStore.isGameLaunching}}
+  {{pendingGameStore.isSubscribedToGame}}
   <p>Pending game id: {{pendingGameStore.pendingGameId}}</p>
   <p>Seconds before launch {{pendingGameStore.secondsBeforeLaunch}}</p>
   <button :style="pendingGameStore.isSubscribedToGame ? { 'background-color': 'green'}: ''" @click="sendSubscriptionToGame">

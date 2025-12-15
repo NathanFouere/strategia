@@ -3,4 +3,5 @@ export default interface WaitingGamePayload {
   game_id: string;
   number_of_waiting_players: number;
   is_player_waiting_for_game: boolean;
+  is_game_launching: boolean;
 }

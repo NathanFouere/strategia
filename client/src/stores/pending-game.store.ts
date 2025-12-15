@@ -6,6 +6,7 @@ export const usePendingGameStore = defineStore('pendingGameStore', {
     secondsBeforeLaunch: null as number | null,
     numberOfWaitingPlayers: null as number | null,
     isSubscribedToGame: false as boolean,
+    isGameLaunching: false as boolean,
   }),
   actions: {
     setPendingGameId(pendingGameId: string): void {
@@ -17,8 +18,11 @@ export const usePendingGameStore = defineStore('pendingGameStore', {
     setNumberOfWaitingPlayers(numberOfWaitingPlayers: number): void {
       this.numberOfWaitingPlayers = numberOfWaitingPlayers;
     },
-    setSubscribedToGame(subscribed: boolean) {
+    setSubscribedToGame(subscribed: boolean): void {
       this.isSubscribedToGame = subscribed;
+    },
+    setGameLaunching(launching: boolean): void {
+      this.isGameLaunching = launching;
     },
   }
 });

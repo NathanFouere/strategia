@@ -5,6 +5,7 @@ type WaitingGamePayload struct {
 	GameId                 string `json:"game_id"`
 	NumberOfWaitingPlayers int    `json:"number_of_waiting_players"`
 	IsPlayerWaitingForGame bool   `json:"is_player_waiting_for_game"`
+	IsGameLaunching        bool   `json:"is_game_launching"`
 }
 
 func (waitingGamePayload *WaitingGamePayload) ToWsExchange() *WsExchangeTemplate[*WaitingGamePayload] {

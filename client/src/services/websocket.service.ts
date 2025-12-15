@@ -35,7 +35,6 @@ export class WebSocketService {
 
   public send<T>(message: WsExchangeTemplate<T>): void{
     const serializedMessage = JSON.stringify(message);
-    console.log(serializedMessage);
     this.ws.send(serializedMessage)
   }
 

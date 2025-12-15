@@ -132,6 +132,7 @@ func (mh *MainHandler) update() error {
 	mh.logger.Info("UPDATE: ", "pending game id", mh.pendingGame.ID, "counter", mh.counterBetweenGames)
 	mh.counterBetweenGames++
 	if mh.counterBetweenGames == 10 { // TODO => enelever hardcode
+		mh.sendRedirectToGame()
 		mh.pendingGame.Start()
 		mh.ongoingGames = append(mh.ongoingGames, mh.pendingGame)
 		mh.logger.Info("New game launched with ID", "id", mh.pendingGame.ID)
@@ -143,6 +144,24 @@ func (mh *MainHandler) update() error {
 	err := mh.sendPendingGameUpdate()
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (mh *MainHandler) sendRedirectToGame() error {
+	data := &ws_exchange.RedirectToGamePayload{}
+
+	bytes, err := json.Marshal(data.ToWsExchange())
+	if err != nil {
+		return err
+	}
+
+	for client := range mh.waitingGameClients {
+		err = mh.waitingGameClients[client].WriteMessage(websocket.TextMessage, bytes)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -160,6 +179,7 @@ func (mh *MainHandler) sendPendingGameUpdate() error {
 			GameId:                 mh.pendingGame.ID.String(),
 			NumberOfWaitingPlayers: len(mh.waitingGameClients),
 			IsPlayerWaitingForGame: isClientWaitingForGame,
+			IsGameLaunching:        mh.counterBetweenGames == 0,
 		}
 
 		bytes, err := json.Marshal(data.ToWsExchange())
@@ -174,7 +194,6 @@ func (mh *MainHandler) sendPendingGameUpdate() error {
 	}
 
 	return nil
-
 }
 
 func (mh *MainHandler) Launch() {
@@ -183,10 +202,7 @@ func (mh *MainHandler) Launch() {
 		for {
 			select {
 			case <-ticker.C:
-				err := mh.update()
-				if err != nil {
-					return
-				}
+				mh.update()
 			}
 		}
 	}()
