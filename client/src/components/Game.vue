@@ -3,51 +3,53 @@ import { onMounted } from "vue";
 import {usePlayerStore} from "@/stores/player.store.ts";
 import {WebSocketService} from "@/services/websocket.service.ts";
 import container from "@/container/container.ts";
-import type {ServerUpdatePayload} from "@/ws-exchange/server-update-payload.ts";
-import type ConnectionPayload from "@/ws-exchange/connection-payload.ts";
-import type Player from "@/models/player.ts";
+import type { ServerUpdatePayload } from "@/ws-exchange/server-update-payload.ts";
+import type PixelClickPayload from "@/ws-exchange/pixel-click-payload.ts";
+import {useRoute} from "vue-router";
+import type {WsExchangeTemplate} from "@/ws-exchange/ws-exchange-template.ts";
+import {p} from "vue-router/dist/router-CWoNjPRp";
 
 const playerStore = usePlayerStore();
 const websocketService: WebSocketService = container.get(WebSocketService);
-
+const route = useRoute()
+const gameId = route.query.gameId as string
 
 onMounted(() => {
   const canvas = document.getElementById("grid") as HTMLCanvasElement;
   const ctx = canvas.getContext("2d");
 
-  // TODO => montre qu'il y a problematique d'unifier ça
-  const cb1 = (e: ConnectionPayload) => {
-    const player: Player = {
-      id: e.player_id,
-      pseudo: e.player_pseudo,
-    }
-    console.log("im called");
-    playerStore.setPlayer(player);
-  }
-  websocketService.subscribe<ConnectionPayload>("connexion-exchange", cb1)
-
   const cb = (e: ServerUpdatePayload) => {
-    console.log("je reçois un truc")
+    console.log("received server_updates_datas", e)
     for (let update_data of e.update_datas) {
-      console.log("updata data ", update_data)
       ctx.fillStyle = update_data.color;
       ctx.fillRect(update_data.x, update_data.y, 1, 1);
     }
   };
 
-  websocketService.subscribe<ServerUpdatePayload>("server-update-datas", cb);
+  websocketService.subscribe<ServerUpdatePayload>("server_update_datas", cb);
 
-    canvas.addEventListener("click", (evt) => {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
+  canvas.addEventListener("click", (evt) => {
+    console.log("send")
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
 
-      const x = Math.floor((evt.clientX - rect.left) * scaleX);
-      const y = Math.floor((evt.clientY - rect.top) * scaleY);
+    const x = Math.floor((evt.clientX - rect.left) * scaleX);
+    const y = Math.floor((evt.clientY - rect.top) * scaleY);
 
-      const msg = JSON.stringify({ x : x, y : y, id_player: playerStore.player?.id });
-      websocketService.ws.send(msg);
-    });
+    const pixelClickPayload: PixelClickPayload = {
+      id_player: playerStore.player!.id,
+      game_id: gameId, // TODO => le recuperer de l'url
+      x: x,
+      y: y,
+    }
+
+    const wsExchange: WsExchangeTemplate<PixelClickPayload> = {
+      type: "pixel_click_evt",
+      payload: pixelClickPayload,
+    }
+    websocketService.send<PixelClickPayload>(wsExchange);
+  });
 
   for (let y = 0; y < 100; y++) {
     for (let x = 0; x < 100; x++) {

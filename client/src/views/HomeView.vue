@@ -10,6 +10,7 @@ import {usePendingGameStore} from "@/stores/pending-game.store.ts";
 import type GameSubscriptionPayload from "@/ws-exchange/game-subscription-payload.ts";
 import type {WsExchangeTemplate} from "@/ws-exchange/ws-exchange-template.ts";
 import router from "@/router";
+import type RedirectToGamePayload from "@/ws-exchange/redirect-to-game-payload.ts";
 
 const playerStore = usePlayerStore();
 const pendingGameStore = usePendingGameStore();
@@ -23,7 +24,7 @@ const cb = (e: ConnectionPayload) => {
 
   playerStore.setPlayer(player);
 }
-websocketService.subscribe<ConnectionPayload>("connexion-exchange", cb)
+websocketService.subscribe<ConnectionPayload>("connexion_exchange", cb)
 
 const cb2 = (e: WaitingGamePayload) => {
   pendingGameStore.setPendingGameId(e.game_id);
@@ -35,11 +36,15 @@ const cb2 = (e: WaitingGamePayload) => {
 
 websocketService.subscribe<WaitingGamePayload>("waiting_game_exchange", cb2)
 
-const cb3 = (_: WaitingGamePayload) => {
-  router.push('/game')
+const cb3 = (e: RedirectToGamePayload) => {
+  websocketService.unsubscribe("connexion_exchange");
+  websocketService.unsubscribe("waiting_game_exchange");
+  websocketService.unsubscribe("redirect_to_game");
+  pendingGameStore.unsetAll();
+  router.push('/game?gameId=' + e.game_id);
 }
 
-websocketService.subscribe<WaitingGamePayload>("redirect_to_game", cb3)
+websocketService.subscribe<RedirectToGamePayload>("redirect_to_game", cb3)
 
 // TODO => clarifier le fait que ça inscrive ET desinscrive
 function sendSubscriptionToGame(): void {
@@ -52,7 +57,7 @@ function sendSubscriptionToGame(): void {
   }
 
   const gameSubscriptionExchange: WsExchangeTemplate<GameSubscriptionPayload> = {
-    type: "game-subscription",
+    type: "game_subscription",
     payload: gameSubscriptionPayload,
   }
 

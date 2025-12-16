@@ -15,6 +15,7 @@ export class WebSocketService {
   constructor(
     @inject(COMMON_DEPENDENCY_TYPES.WebSocketUrl) url: string,
   ) {
+    console.log("CONSTRUCTOR CALLED")
     this.ws = new WebSocket(url);
     this.ws.onmessage = (event: MessageEvent): void => {
       const message = JSON.parse(event.data) as WsExchangeTemplate<any>;

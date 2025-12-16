@@ -7,7 +7,7 @@ type ConnectionPayload struct {
 
 func (connectionPayload *ConnectionPayload) ToWsExchange() *WsExchangeTemplate[*ConnectionPayload] {
 	return &WsExchangeTemplate[*ConnectionPayload]{
-		Type:    "connexion-exchange",
+		Type:    "connexion_exchange",
 		Payload: connectionPayload,
 	}
 }

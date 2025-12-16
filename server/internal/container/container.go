@@ -41,6 +41,13 @@ func SetupContainer() error {
 		slog.Error("Error occured while providing player repository", "err", err)
 	}
 
+	err = GetContainer().Provide(func(logger *logger.LoggerService) *repository.GameRepository {
+		return repository.NewGameRepository(logger)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing game repository", "err", err)
+	}
+
 	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository) *service.GameGeneratorService {
 		return service.NewGameGeneratorService(logger, playerRepository)
 	})
@@ -48,8 +55,8 @@ func SetupContainer() error {
 		slog.Error("Error occured while providing game generator service", "err", err)
 	}
 
-	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository) *handler.MainHandler {
-		return handler.NewMainHandler(logger, playerRepository)
+	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository, gameRepository *repository.GameRepository) *handler.MainHandler {
+		return handler.NewMainHandler(logger, playerRepository, gameRepository)
 	})
 	if err != nil {
 		slog.Error("Error occured while providing main handler", "err", err)

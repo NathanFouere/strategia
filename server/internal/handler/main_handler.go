@@ -17,7 +17,7 @@ import (
 
 type MainHandler struct {
 	upgrader            websocket.Upgrader
-	clients             map[uuid.UUID]*websocket.Conn
+	clientsInLobby      map[uuid.UUID]*websocket.Conn
 	waitingGameClients  map[uuid.UUID]*websocket.Conn
 	mutex               *sync.Mutex
 	broadcast           chan []byte
@@ -26,14 +26,15 @@ type MainHandler struct {
 	ongoingGames        []*model.Game
 	pendingGame         *model.Game
 	counterBetweenGames int
+	gameRepository      *repository.GameRepository
 }
 
-func NewMainHandler(logger *logger.LoggerService, playerRepository *repository.PlayerRepository) *MainHandler {
-	return &MainHandler{
+func NewMainHandler(logger *logger.LoggerService, playerRepository *repository.PlayerRepository, gameRepository *repository.GameRepository) *MainHandler {
+	mainHandler := &MainHandler{
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool { return true },
 		},
-		clients:             make(map[uuid.UUID]*websocket.Conn),
+		clientsInLobby:      make(map[uuid.UUID]*websocket.Conn),
 		waitingGameClients:  make(map[uuid.UUID]*websocket.Conn),
 		mutex:               &sync.Mutex{},
 		broadcast:           make(chan []byte),
@@ -42,7 +43,12 @@ func NewMainHandler(logger *logger.LoggerService, playerRepository *repository.P
 		ongoingGames:        []*model.Game{},
 		pendingGame:         model.InitGame(),
 		counterBetweenGames: 0,
+		gameRepository:      gameRepository,
 	}
+
+	mainHandler.gameRepository.AddGame(mainHandler.pendingGame)
+
+	return mainHandler
 }
 
 func (mh *MainHandler) wsHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,8 +60,9 @@ func (mh *MainHandler) wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	mh.mutex.Lock()
 	mh.logger.Info("New client as connected with addr", "addr", conn.RemoteAddr())
-	player := model.InitPlayer("test")
-	mh.clients[player.ID] = conn
+	player := model.InitPlayer("test", conn)
+	mh.playerRepository.AddPlayer(player)
+	mh.clientsInLobby[player.ID] = conn
 	mh.mutex.Unlock()
 
 	// todo => bouger dans un service
@@ -76,7 +83,7 @@ func (mh *MainHandler) wsHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			mh.mutex.Lock()
 			// TODO => résoudre ça
-			// delete(mh.clients, conn)
+			// delete(mh.clientsInLobby, conn)
 			mh.mutex.Unlock()
 			break
 		}
@@ -95,7 +102,7 @@ func (mh *MainHandler) handleMessages() {
 			fmt.Println("JSON ERROR:", err)
 		}
 		switch exchangeRaw.Type {
-		case "game-subscription":
+		case "game_subscription":
 			fmt.Println("received game subscription evt")
 			payload, err := ws_exchange.ExtractTypedPayload[ws_exchange.GameSubscriptionPayload](&exchangeRaw)
 			if err != nil {
@@ -103,10 +110,33 @@ func (mh *MainHandler) handleMessages() {
 				continue
 			}
 			mh.handleGameSubscription(payload)
+		case "pixel_click_evt":
+			fmt.Println("Received pixel_click_evt")
+			payload, err := ws_exchange.ExtractTypedPayload[ws_exchange.PixelClickPayload](&exchangeRaw)
+			if err != nil {
+				fmt.Println("Payload ERROR:", err)
+				continue
+			}
+			mh.handlePixelEvt(payload)
 		}
 
 		mh.mutex.Unlock()
 	}
+}
+
+func (mh *MainHandler) handlePixelEvt(pixelClickPayload *ws_exchange.PixelClickPayload) {
+	gameId, err := uuid.Parse(pixelClickPayload.GameId)
+	if err != nil {
+		mh.logger.Error("Couldn't parse uuid from pixel click payload", "uuid", pixelClickPayload.GameId, "err", err)
+		return
+	}
+	game, err := mh.gameRepository.GetGameOfId(gameId)
+	if err != nil {
+		mh.logger.Error("Couldn't find id from game", "uuid", pixelClickPayload.GameId, "err", err)
+		return
+	}
+
+	game.ReceivePixelClick(pixelClickPayload)
 }
 
 func (mh *MainHandler) handleGameSubscription(gameSubscriptionPayload *ws_exchange.GameSubscriptionPayload) {
@@ -124,7 +154,7 @@ func (mh *MainHandler) handleGameSubscription(gameSubscriptionPayload *ws_exchan
 	mh.logger.Info("Subscribe player to game", "playerid", parsedUUid, "gameid", mh.pendingGame.ID)
 	subscribingPlayer, err := mh.playerRepository.GetPlayerFromId(parsedUUid)
 	mh.pendingGame.AddPlayer(subscribingPlayer)
-	connCorrespondingToUuid := mh.clients[parsedUUid]
+	connCorrespondingToUuid := mh.clientsInLobby[parsedUUid]
 	mh.waitingGameClients[parsedUUid] = connCorrespondingToUuid
 }
 
@@ -137,8 +167,10 @@ func (mh *MainHandler) update() error {
 		mh.ongoingGames = append(mh.ongoingGames, mh.pendingGame)
 		mh.logger.Info("New game launched with ID", "id", mh.pendingGame.ID)
 		mh.pendingGame = model.InitGame()
+		mh.gameRepository.AddGame(mh.pendingGame)
 		mh.waitingGameClients = make(map[uuid.UUID]*websocket.Conn)
 		mh.counterBetweenGames = 0
+		return nil
 	}
 
 	err := mh.sendPendingGameUpdate()
@@ -150,7 +182,9 @@ func (mh *MainHandler) update() error {
 }
 
 func (mh *MainHandler) sendRedirectToGame() error {
-	data := &ws_exchange.RedirectToGamePayload{}
+	data := &ws_exchange.RedirectToGamePayload{
+		GameId: mh.pendingGame.ID.String(),
+	}
 
 	bytes, err := json.Marshal(data.ToWsExchange())
 	if err != nil {
@@ -159,6 +193,8 @@ func (mh *MainHandler) sendRedirectToGame() error {
 
 	for client := range mh.waitingGameClients {
 		err = mh.waitingGameClients[client].WriteMessage(websocket.TextMessage, bytes)
+		delete(mh.waitingGameClients, client)
+		delete(mh.clientsInLobby, client)
 		if err != nil {
 			return err
 		}
@@ -168,7 +204,7 @@ func (mh *MainHandler) sendRedirectToGame() error {
 }
 
 func (mh *MainHandler) sendPendingGameUpdate() error {
-	for client := range mh.clients {
+	for client := range mh.clientsInLobby {
 		isClientWaitingForGame := false
 		_, ok := mh.waitingGameClients[client]
 		if ok {
@@ -187,7 +223,7 @@ func (mh *MainHandler) sendPendingGameUpdate() error {
 			return err
 		}
 
-		err = mh.clients[client].WriteMessage(websocket.TextMessage, bytes)
+		err = mh.clientsInLobby[client].WriteMessage(websocket.TextMessage, bytes)
 		if err != nil {
 			return err
 		}

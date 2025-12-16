@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"server/internal/ws_exchange"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -26,21 +27,35 @@ func InitGame() *Game {
 	}
 }
 
-func (Game *Game) AddPlayer(player *Player) {
-	Game.Players = append(Game.Players, player)
+func (g *Game) AddPlayer(player *Player) {
+	g.Players = append(g.Players, player)
 }
-func (Game *Game) Start() {
+func (g *Game) Start() {
 	fmt.Println("Game started !")
+	ticker := time.NewTicker(1 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				err := g.Update()
+				if err != nil {
+					fmt.Println("ERROR in game update")
+					return
+				}
+			}
+		}
+	}()
 }
 
-func (game *Game) ReceivePixelClick(pixelClick *ws_exchange.PixelClickPayload) {
+func (g *Game) ReceivePixelClick(pixelClick *ws_exchange.PixelClickPayload) {
+	fmt.Println("GAME RECEIVE PIXELCLICK", pixelClick)
 	tile := fmt.Sprintf("%d-%d", pixelClick.X, pixelClick.Y)
-	game.TilesToRender[tile] = pixelClick.IdPlayer
-	game.TilesDict[tile] = pixelClick.IdPlayer
+	g.TilesToRender[tile] = pixelClick.IdPlayer
+	g.TilesDict[tile] = pixelClick.IdPlayer
 }
 
-func (game *Game) findPlayerOfIdInGame(playerId uuid.UUID) (*Player, error) {
-	for _, val := range game.Players {
+func (g *Game) findPlayerOfIdInGame(playerId uuid.UUID) (*Player, error) {
+	for _, val := range g.Players {
 		if val.ID == playerId {
 			return val, nil
 		}
@@ -49,10 +64,10 @@ func (game *Game) findPlayerOfIdInGame(playerId uuid.UUID) (*Player, error) {
 	return nil, errors.New("player not found")
 }
 
-func (game *Game) generateServerUpdate() *ws_exchange.ServerUpdatePayload {
+func (g *Game) generateServerUpdate() *ws_exchange.ServerUpdatePayload {
 	updates := []ws_exchange.ServerUpdateData{}
-	fmt.Println(game.TilesDict)
-	for key, val := range game.TilesDict {
+	fmt.Println(g.TilesDict)
+	for key, val := range g.TilesDict {
 		parts := strings.Split(key, "-")
 		x := parts[0]
 		y := parts[1]
@@ -63,7 +78,7 @@ func (game *Game) generateServerUpdate() *ws_exchange.ServerUpdatePayload {
 			// todo => should throw error
 		}
 
-		player, err := game.findPlayerOfIdInGame(playerId)
+		player, err := g.findPlayerOfIdInGame(playerId)
 		if err != nil {
 			fmt.Println("error", err)
 			continue
@@ -82,8 +97,9 @@ func (game *Game) generateServerUpdate() *ws_exchange.ServerUpdatePayload {
 	}
 }
 
-func (game *Game) Update(conn *websocket.Conn) error {
-	data := game.generateServerUpdate()
+func (g *Game) Update() error {
+	fmt.Println("UPDATE GAME !")
+	data := g.generateServerUpdate()
 	fmt.Println(data)
 
 	bytes, err := json.Marshal(data.ToWsExchange())
@@ -91,14 +107,16 @@ func (game *Game) Update(conn *websocket.Conn) error {
 		return err
 	}
 
-	err = conn.WriteMessage(websocket.TextMessage, bytes)
-	if err != nil {
-		return err
+	for _, player := range g.Players {
+		err = player.WsCon.WriteMessage(websocket.TextMessage, bytes)
+		if err != nil {
+			return err
+		}
 	}
-
+	g.TilesToRender = map[string]string{}
 	return nil
 }
 
-func (game *Game) ResetState() {
-	game.TilesDict = map[string]string{}
+func (g *Game) ResetState() {
+	g.TilesDict = map[string]string{}
 }

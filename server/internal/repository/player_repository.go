@@ -9,26 +9,25 @@ import (
 )
 
 type PlayerRepository struct {
-	LoggedPlayers []*model.Player // Solution temporaire ou on stocke tt les joueurs en mémoire
-	logger        *logger.LoggerService
+	players []*model.Player // Solution temporaire ou on stocke tt les joueurs en mémoire
+	logger  *logger.LoggerService
 }
 
 func NewPlayerRepository(loggerService *logger.LoggerService) *PlayerRepository {
 	return &PlayerRepository{
-		LoggedPlayers: []*model.Player{},
-		logger:        loggerService,
+		players: []*model.Player{},
+		logger:  loggerService,
 	}
 }
 
-func (pr *PlayerRepository) AddPlayer(pseudo string) {
-	newPlayer := model.InitPlayer(pseudo)
-	pr.LoggedPlayers = append(pr.LoggedPlayers, newPlayer)
+func (pr *PlayerRepository) AddPlayer(player *model.Player) {
+	pr.players = append(pr.players, player)
 }
 
 func (pr *PlayerRepository) GetPlayerFromId(uuid uuid.UUID) (*model.Player, error) {
-	for i := 0; i < len(pr.LoggedPlayers); i++ {
-		if pr.LoggedPlayers[i].ID == uuid {
-			return pr.LoggedPlayers[i], nil
+	for i := 0; i < len(pr.players); i++ {
+		if pr.players[i].ID == uuid {
+			return pr.players[i], nil
 		}
 	}
 
@@ -37,14 +36,14 @@ func (pr *PlayerRepository) GetPlayerFromId(uuid uuid.UUID) (*model.Player, erro
 
 func (pr *PlayerRepository) RemovePlayer(uuid uuid.UUID) error {
 	// moche et gourmand mais marche pour le moment
-	for i := 0; i < len(pr.LoggedPlayers); i++ {
-		if pr.LoggedPlayers[i].ID == uuid {
+	for i := 0; i < len(pr.players); i++ {
+		if pr.players[i].ID == uuid {
 			// cf . https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
-			pr.LoggedPlayers[i] = pr.LoggedPlayers[len(pr.LoggedPlayers)-1]
+			pr.players[i] = pr.players[len(pr.players)-1]
 			return nil
 		}
 	}
 
 	pr.logger.Error("Didn't find the player of uuid", "uuid", uuid)
-	return errors.New("Didnt find player")
+	return errors.New("Didn't find player")
 }

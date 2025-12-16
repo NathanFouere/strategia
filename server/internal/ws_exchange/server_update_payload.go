@@ -12,7 +12,7 @@ type ServerUpdatePayload struct {
 
 func (serverUpdatePayload *ServerUpdatePayload) ToWsExchange() *WsExchangeTemplate[*ServerUpdatePayload] {
 	return &WsExchangeTemplate[*ServerUpdatePayload]{
-		Type:    "server-update-datas",
+		Type:    "server_update_datas",
 		Payload: serverUpdatePayload,
 	}
 }
