@@ -11,20 +11,35 @@ import type GameSubscriptionPayload from "@/ws-exchange/game-subscription-payloa
 import type {WsExchangeTemplate} from "@/ws-exchange/ws-exchange-template.ts";
 import router from "@/router";
 import type RedirectToGamePayload from "@/ws-exchange/redirect-to-game-payload.ts";
+import type GameUnsubscribePayload from "@/ws-exchange/game-unsubscribe-payload.ts";
+import type SetInWaitingLobbyPayload from "@/ws-exchange/set-in-waiting-lobby-payload.ts";
 
 const playerStore = usePlayerStore();
 const pendingGameStore = usePendingGameStore();
 const websocketService: WebSocketService = container.get(WebSocketService);
 
-const cb = (e: ConnectionPayload) => {
-  const player: Player = {
-    id: e.player_id,
-    pseudo: e.player_pseudo,
+if (!playerStore.player) {
+  const cb = (e: ConnectionPayload) => {
+    const player: Player = {
+      id: e.player_id,
+      pseudo: e.player_pseudo,
+    }
+
+    playerStore.setPlayer(player);
+  }
+  websocketService.subscribe<ConnectionPayload>("connexion_exchange", cb)
+} else {
+  const setInWaitingLobbyPayload: SetInWaitingLobbyPayload = {
+    player_id: playerStore.player!.id
   }
 
-  playerStore.setPlayer(player);
+  const setInWaitingLobbyExchange: WsExchangeTemplate<SetInWaitingLobbyPayload> = {
+    type: "set_in_waiting_lobby",
+    payload: setInWaitingLobbyPayload
+  }
+
+  websocketService.send<SetInWaitingLobbyPayload>(setInWaitingLobbyExchange);
 }
-websocketService.subscribe<ConnectionPayload>("connexion_exchange", cb)
 
 const cb2 = (e: WaitingGamePayload) => {
   pendingGameStore.setPendingGameId(e.game_id);
@@ -50,6 +65,20 @@ websocketService.subscribe<RedirectToGamePayload>("redirect_to_game", cb3)
 function sendSubscriptionToGame(): void {
   if (!playerStore.hasConnectedPlayer) {
     throw new Error("Should have a connected player");
+  }
+  if (pendingGameStore.isSubscribedToGame) {
+    const gameUnsubscribePayload: GameUnsubscribePayload = {
+      player_id: playerStore.player!.id
+    }
+
+    const gameUnsubscribeExchange: WsExchangeTemplate<GameUnsubscribePayload> = {
+      type: "game_unsubscribe",
+      payload: gameUnsubscribePayload
+    }
+
+    websocketService.send<GameUnsubscribePayload>(gameUnsubscribeExchange);
+
+    return;
   }
 
   const gameSubscriptionPayload: GameSubscriptionPayload = {

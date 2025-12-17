@@ -30,6 +30,20 @@ func InitGame() *Game {
 func (g *Game) AddPlayer(player *Player) {
 	g.Players = append(g.Players, player)
 }
+
+func (g *Game) RemovePlayer(playerId uuid.UUID) error {
+	for i := 0; i < len(g.Players); i++ {
+		if g.Players[i].ID == playerId {
+			// c
+			g.Players[i] = g.Players[len(g.Players)-1]
+			g.Players = g.Players[:len(g.Players)-1]
+			return nil
+		}
+	}
+
+	return errors.New("Couldn't find player of id in game")
+}
+
 func (g *Game) Start() {
 	fmt.Println("Game started !")
 	ticker := time.NewTicker(1 * time.Second)

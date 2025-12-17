@@ -34,6 +34,8 @@ func (gcs *GameGeneratorService) RemoveAttendingPlayer(uuid uuid.UUID) error {
 		if gcs.AttendingPlayers[i].ID == uuid {
 			// cf . https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
 			gcs.AttendingPlayers[i] = gcs.AttendingPlayers[len(gcs.AttendingPlayers)-1]
+			gcs.AttendingPlayers = gcs.AttendingPlayers[:len(gcs.AttendingPlayers)-1]
+
 			return nil
 		}
 	}

@@ -118,10 +118,116 @@ func (mh *MainHandler) handleMessages() {
 				continue
 			}
 			mh.handlePixelEvt(payload)
+		case "game_unsubscribe":
+			fmt.Println("Received game_unsubscribe")
+			payload, err := ws_exchange.ExtractTypedPayload[ws_exchange.GameUnsubscribePayload](&exchangeRaw)
+			if err != nil {
+				fmt.Println("Payload ERROR:", err)
+				continue
+			}
+			mh.handleGameUnsubscribeEvt(payload)
+		case "set_in_waiting_lobby":
+			fmt.Println("Received set_in_waiting_lobby")
+			payload, err := ws_exchange.ExtractTypedPayload[ws_exchange.SetInWaitingLobbyPayload](&exchangeRaw)
+			if err != nil {
+				fmt.Println("Payload ERROR:", err)
+				continue
+			}
+			mh.handleSetInWaitingLobbyEvt(payload)
+		case "exit_game":
+			fmt.Println("Received game unsubscribed")
+			payload, err := ws_exchange.ExtractTypedPayload[ws_exchange.ExitGamePayload](&exchangeRaw)
+			if err != nil {
+				fmt.Println("Payload ERROR:", err)
+				continue
+			}
+			mh.handleExitGame(payload)
 		}
 
 		mh.mutex.Unlock()
 	}
+}
+
+func (mh *MainHandler) handleSetInWaitingLobbyEvt(setInWaitingLobbyPayload *ws_exchange.SetInWaitingLobbyPayload) {
+	parsedPlayerId, err := uuid.Parse(setInWaitingLobbyPayload.PlayerId)
+	if err != nil {
+		mh.logger.Error("Couldn't parse uuid from game subscription payload", "uuid", setInWaitingLobbyPayload.PlayerId, "err", err)
+		return
+	}
+
+	player, err := mh.playerRepository.GetPlayerFromId(parsedPlayerId)
+	if err != nil {
+		return
+	}
+
+	mh.clientsInLobby[player.ID] = player.WsCon
+}
+
+func (mh *MainHandler) handleExitGame(exitGamePayload *ws_exchange.ExitGamePayload) {
+	parsedPlayerId, err := uuid.Parse(exitGamePayload.PlayerId)
+	if err != nil {
+		mh.logger.Error("Couldn't parse uuid from game subscription payload", "uuid", exitGamePayload.PlayerId, "err", err)
+		return
+	}
+
+	parsedGameId, err := uuid.Parse(exitGamePayload.GameId)
+	if err != nil {
+		mh.logger.Error("Couldn't parse uuid from game subscription payload", "uuid", exitGamePayload.GameId, "err", err)
+		return
+	}
+
+	game, err := mh.gameRepository.GetGameOfId(parsedGameId)
+
+	if err != nil {
+		mh.logger.Error("Couldn't pase gameId", "err", err)
+		return
+	}
+
+	err = game.RemovePlayer(parsedPlayerId)
+	if err != nil {
+		mh.logger.Error("Couldn't find player id ingame")
+		return
+	}
+}
+
+func (mh *MainHandler) handleGameUnsubscribeEvt(gameUnsubscribePayload *ws_exchange.GameUnsubscribePayload) {
+	parsedUUid, err := uuid.Parse(gameUnsubscribePayload.PlayerId)
+	if err != nil {
+		mh.logger.Error("Couldn't parse uuid from game subscription payload", "uuid", gameUnsubscribePayload.PlayerId, "err", err)
+		return
+	}
+	_, ok := mh.waitingGameClients[parsedUUid]
+	if ok {
+		mh.logger.Info("Unsubscribe player from game", "playerid", parsedUUid, "gameid", mh.pendingGame.ID)
+		fmt.Println("NB PLAYER IN PENDING GAME BEFORE", len(mh.pendingGame.Players))
+		err := mh.pendingGame.RemovePlayer(parsedUUid)
+		if err != nil {
+			return
+		}
+		fmt.Println("NB PLAYER IN PENDING GAME AFTER", len(mh.pendingGame.Players))
+		delete(mh.waitingGameClients, parsedUUid)
+		return
+	}
+
+	mh.logger.Error("Tried to unsubscribe unsubscribed player", "playerid", parsedUUid, "gameid", mh.pendingGame.ID)
+}
+
+func (mh *MainHandler) handleGameSubscription(gameSubscriptionPayload *ws_exchange.GameSubscriptionPayload) {
+	parsedUUid, err := uuid.Parse(gameSubscriptionPayload.PlayerId)
+	if err != nil {
+		mh.logger.Error("Couldn't parse uuid from game subscription payload", "uuid", gameSubscriptionPayload.PlayerId, "err", err)
+	}
+	_, ok := mh.waitingGameClients[parsedUUid]
+	if ok {
+		mh.logger.Error("Player already subscribed to game", "playerid", parsedUUid, "gameid", mh.pendingGame.ID)
+		return
+	}
+
+	mh.logger.Info("Subscribe player to game", "playerid", parsedUUid, "gameid", mh.pendingGame.ID)
+	subscribingPlayer, err := mh.playerRepository.GetPlayerFromId(parsedUUid)
+	mh.pendingGame.AddPlayer(subscribingPlayer)
+	connCorrespondingToUuid := mh.clientsInLobby[parsedUUid]
+	mh.waitingGameClients[parsedUUid] = connCorrespondingToUuid
 }
 
 func (mh *MainHandler) handlePixelEvt(pixelClickPayload *ws_exchange.PixelClickPayload) {
@@ -139,29 +245,10 @@ func (mh *MainHandler) handlePixelEvt(pixelClickPayload *ws_exchange.PixelClickP
 	game.ReceivePixelClick(pixelClickPayload)
 }
 
-func (mh *MainHandler) handleGameSubscription(gameSubscriptionPayload *ws_exchange.GameSubscriptionPayload) {
-	parsedUUid, err := uuid.Parse(gameSubscriptionPayload.PlayerId)
-	if err != nil {
-		mh.logger.Error("Couldn't parse uuid from game subscription payload", "uuid", gameSubscriptionPayload.PlayerId, "err", err)
-	}
-	_, ok := mh.waitingGameClients[parsedUUid]
-	if ok {
-		mh.logger.Info("Unsubscribe player from game", "playerid", parsedUUid, "gameid", mh.pendingGame.ID)
-		delete(mh.waitingGameClients, parsedUUid)
-		return
-	}
-
-	mh.logger.Info("Subscribe player to game", "playerid", parsedUUid, "gameid", mh.pendingGame.ID)
-	subscribingPlayer, err := mh.playerRepository.GetPlayerFromId(parsedUUid)
-	mh.pendingGame.AddPlayer(subscribingPlayer)
-	connCorrespondingToUuid := mh.clientsInLobby[parsedUUid]
-	mh.waitingGameClients[parsedUUid] = connCorrespondingToUuid
-}
-
 func (mh *MainHandler) update() error {
 	mh.logger.Info("UPDATE: ", "pending game id", mh.pendingGame.ID, "counter", mh.counterBetweenGames)
 	mh.counterBetweenGames++
-	if mh.counterBetweenGames == 10 { // TODO => enelever hardcode
+	if mh.counterBetweenGames == 10 && len(mh.pendingGame.Players) > 0 { // TODO => enelever hardcode
 		mh.sendRedirectToGame()
 		mh.pendingGame.Start()
 		mh.ongoingGames = append(mh.ongoingGames, mh.pendingGame)
@@ -169,6 +256,9 @@ func (mh *MainHandler) update() error {
 		mh.pendingGame = model.InitGame()
 		mh.gameRepository.AddGame(mh.pendingGame)
 		mh.waitingGameClients = make(map[uuid.UUID]*websocket.Conn)
+		mh.counterBetweenGames = 0
+		return nil
+	} else if mh.counterBetweenGames == 10 && len(mh.pendingGame.Players) == 0 {
 		mh.counterBetweenGames = 0
 		return nil
 	}

@@ -40,6 +40,7 @@ func (gr *GameRepository) RemoveGame(gameId uuid.UUID) error {
 		if gr.games[i].ID == gameId {
 			// cf . https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
 			gr.games[i] = gr.games[len(gr.games)-1]
+			gr.games = gr.games[:len(gr.games)-1]
 			return nil
 		}
 	}

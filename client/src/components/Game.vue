@@ -3,11 +3,10 @@ import { onMounted } from "vue";
 import {usePlayerStore} from "@/stores/player.store.ts";
 import {WebSocketService} from "@/services/websocket.service.ts";
 import container from "@/container/container.ts";
-import type { ServerUpdatePayload } from "@/ws-exchange/server-update-payload.ts";
+import { ServerUpdatePayload } from "@/ws-exchange/server-update-payload.ts";
 import type PixelClickPayload from "@/ws-exchange/pixel-click-payload.ts";
 import {useRoute} from "vue-router";
 import type {WsExchangeTemplate} from "@/ws-exchange/ws-exchange-template.ts";
-import {p} from "vue-router/dist/router-CWoNjPRp";
 
 const playerStore = usePlayerStore();
 const websocketService: WebSocketService = container.get(WebSocketService);

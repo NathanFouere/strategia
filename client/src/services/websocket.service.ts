@@ -8,14 +8,12 @@ import {COMMON_DEPENDENCY_TYPES} from "@/container/common.types.ts";
 // TODO => se débarasser des any ici, se renseigner sur "discriminated unions" cf . https://www.codefixeshub.com/typescript/discriminated-unions-type-narrowing-for-objects-wi
 @injectable()
 export class WebSocketService {
-  // TODO => enlever le fait que ce soit public
-  public ws: WebSocket;
+  private ws: WebSocket;
   private callbackDict: Record<string, ((payload: any) => void )> = {};
 
   constructor(
     @inject(COMMON_DEPENDENCY_TYPES.WebSocketUrl) url: string,
   ) {
-    console.log("CONSTRUCTOR CALLED")
     this.ws = new WebSocket(url);
     this.ws.onmessage = (event: MessageEvent): void => {
       const message = JSON.parse(event.data) as WsExchangeTemplate<any>;
@@ -40,9 +38,6 @@ export class WebSocketService {
   }
 
   public unsubscribe(type: string): void {
-    if (this.callbackDict[type] === undefined) {
-      throw new UndefinedCallbackError(type)
-    }
     delete this.callbackDict[type] ;
   }
 
