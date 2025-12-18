@@ -100,11 +100,11 @@ function sendSubscriptionToGame(): void {
 
     <br>
 
-    <input class="bg-transparent text-sm border border-slate-200 rounded-md px-3 py-2 " :placeholder="playerStore.player?.id">
+    <input class="bg-transparent text-sm border border-slate-200 rounded-md px-3 py-2 w-96" :placeholder="playerStore.player?.id">
     <br />
 
     <button
-      class="bg-blue-500 text-white px-4 py-2 rounded"
+      class="bg-blue-500 text-white px-4 py-2 rounded w-96"
       v-if="!pendingGameStore.isGameLaunching"
       :class="{ 'bg-green-500': pendingGameStore.isSubscribedToGame }"
       @click="sendSubscriptionToGame"
@@ -118,7 +118,7 @@ function sendSubscriptionToGame(): void {
 
 
     <button
-      class="bg-blue-500 text-white px-4 py-2 rounded"
+      class="bg-blue-500 text-white px-4 py-2 rounded w-96"
       v-else
       :class="{ 'bg-green-500': pendingGameStore.isSubscribedToGame }"
     >
