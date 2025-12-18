@@ -4,7 +4,6 @@ import Game from "@/components/Game.vue";
 import {useRoute, useRouter} from "vue-router";
 import {WebSocketService} from "@/services/websocket.service.ts";
 import container from "@/container/container.ts";
-import type GameUnsubscribePayload from "@/ws-exchange/game-unsubscribe-payload.ts";
 import type {WsExchangeTemplate} from "@/ws-exchange/ws-exchange-template.ts";
 import {usePlayerStore} from "@/stores/player.store.ts";
 import type ExitGamePayload from "@/ws-exchange/exit-game-payload.ts";
@@ -35,7 +34,14 @@ function redirectToHome() {
 </script>
 
 <template>
-  <button @click="redirectToHome()">Access Home</button>
-  <br />
+  <div class="flex flex-col items-center gap-4 p-2">
   <Game />
+  <br>
+  <button
+    class="bg-blue-500 text-white px-4 py-2 rounded"
+    @click="redirectToHome()"
+  >
+    Leave Game
+  </button>
+  </div>
 </template>

@@ -50,8 +50,8 @@ onMounted(() => {
     websocketService.send<PixelClickPayload>(wsExchange);
   });
 
-  for (let y = 0; y < 100; y++) {
-    for (let x = 0; x < 100; x++) {
+  for (let y = 0; y < 1000; y++) {
+    for (let x = 0; x < 1000; x++) {
       ctx.fillStyle = "#aaa";
       ctx.fillRect(x, y, 1, 1);
     }
@@ -60,5 +60,5 @@ onMounted(() => {
 </script>
 
 <template>
-  <canvas id="grid" width="100" height="100"></canvas>
+  <canvas id="grid" width="1000" height="1000"></canvas>
 </template>

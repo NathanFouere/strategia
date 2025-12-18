@@ -95,15 +95,40 @@ function sendSubscriptionToGame(): void {
 </script>
 
 <template>
-  {{pendingGameStore.isGameLaunching}}
-  {{pendingGameStore.isSubscribedToGame}}
-  <p>Pending game id: {{pendingGameStore.pendingGameId}}</p>
-  <p>Seconds before launch {{pendingGameStore.secondsBeforeLaunch}}</p>
-  <button :style="pendingGameStore.isSubscribedToGame ? { 'background-color': 'green'}: ''" @click="sendSubscriptionToGame">
-    Join next game {{pendingGameStore.pendingGameId}} ({{pendingGameStore.numberOfWaitingPlayers}} players waiting)
-  </button>
-  <br />
+  <div class="flex flex-col items-center gap-4 p-2">
+    <h1 class="text-4xl font-bold">Strategia</h1>
+
+    <br>
+
+    <input class="bg-transparent text-sm border border-slate-200 rounded-md px-3 py-2 " :placeholder="playerStore.player?.id">
+    <br />
+
+    <button
+      class="bg-blue-500 text-white px-4 py-2 rounded"
+      v-if="!pendingGameStore.isGameLaunching"
+      :class="{ 'bg-green-500': pendingGameStore.isSubscribedToGame }"
+      @click="sendSubscriptionToGame"
+    >
+      Join next game
+      <br />
+      ({{pendingGameStore.numberOfWaitingPlayers}} players waiting)
+      <br />
+      Launching in {{pendingGameStore.secondsBeforeLaunch}} seconds
+    </button>
+
+
+    <button
+      class="bg-blue-500 text-white px-4 py-2 rounded"
+      v-else
+      :class="{ 'bg-green-500': pendingGameStore.isSubscribedToGame }"
+    >
+      Game launching !
+      <br />
+      ({{pendingGameStore.numberOfWaitingPlayers}} players waiting)
+    </button>
+  </div>
 </template>
+
 
 <style scoped>
 
