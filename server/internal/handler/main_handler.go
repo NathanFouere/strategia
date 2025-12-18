@@ -60,7 +60,7 @@ func (mh *MainHandler) wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	mh.mutex.Lock()
 	mh.logger.Info("New client as connected with addr", "addr", conn.RemoteAddr())
-	player := model.InitPlayer("test", conn)
+	player := model.InitPlayer(conn)
 	mh.playerRepository.AddPlayer(player)
 	mh.clientsInLobby[player.ID] = conn
 	mh.mutex.Unlock()
@@ -142,6 +142,14 @@ func (mh *MainHandler) handleMessages() {
 				continue
 			}
 			mh.handleExitGame(payload)
+		case "update_player_pseudo":
+			fmt.Println("Received update player pseudo")
+			payload, err := ws_exchange.ExtractTypedPayload[ws_exchange.UpdatePlayerPseudoPayload](&exchangeRaw)
+			if err != nil {
+				fmt.Println("Payload ERROR:", err)
+				continue
+			}
+			mh.handleUpdatePlayerPseudo(payload)
 		}
 
 		mh.mutex.Unlock()
@@ -161,6 +169,20 @@ func (mh *MainHandler) handleSetInWaitingLobbyEvt(setInWaitingLobbyPayload *ws_e
 	}
 
 	mh.clientsInLobby[player.ID] = player.WsCon
+}
+
+func (mh *MainHandler) handleUpdatePlayerPseudo(updatePlayerPseudoPayload *ws_exchange.UpdatePlayerPseudoPayload) {
+	parsedPlayerId, err := uuid.Parse(updatePlayerPseudoPayload.PlayerId)
+	if err != nil {
+		mh.logger.Error("Couldn't parse uuid from game subscription payload", "uuid", updatePlayerPseudoPayload.PlayerId, "err", err)
+	}
+
+	player, err := mh.playerRepository.GetPlayerFromId(parsedPlayerId)
+	if err != nil {
+		return
+	}
+
+	player.UpdatePseudo(updatePlayerPseudoPayload.NewPseudo)
 }
 
 func (mh *MainHandler) handleExitGame(exitGamePayload *ws_exchange.ExitGamePayload) {

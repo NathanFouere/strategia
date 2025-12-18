@@ -13,6 +13,8 @@ import router from "@/router";
 import type RedirectToGamePayload from "@/ws-exchange/redirect-to-game-payload.ts";
 import type GameUnsubscribePayload from "@/ws-exchange/game-unsubscribe-payload.ts";
 import type SetInWaitingLobbyPayload from "@/ws-exchange/set-in-waiting-lobby-payload.ts";
+import {ref, watch} from "vue";
+import type UpdatePlayerPseudoPayload from "@/ws-exchange/update-player-pseudo-payload.ts";
 
 const playerStore = usePlayerStore();
 const pendingGameStore = usePendingGameStore();
@@ -23,20 +25,20 @@ if (!playerStore.player) {
     const player: Player = {
       id: e.player_id,
       pseudo: e.player_pseudo,
-    }
+    };
 
     playerStore.setPlayer(player);
   }
-  websocketService.subscribe<ConnectionPayload>("connexion_exchange", cb)
+  websocketService.subscribe<ConnectionPayload>("connexion_exchange", cb);
 } else {
   const setInWaitingLobbyPayload: SetInWaitingLobbyPayload = {
     player_id: playerStore.player!.id
-  }
+  };
 
   const setInWaitingLobbyExchange: WsExchangeTemplate<SetInWaitingLobbyPayload> = {
     type: "set_in_waiting_lobby",
     payload: setInWaitingLobbyPayload
-  }
+  };
 
   websocketService.send<SetInWaitingLobbyPayload>(setInWaitingLobbyExchange);
 }
@@ -92,6 +94,29 @@ function sendSubscriptionToGame(): void {
 
   websocketService.send<GameSubscriptionPayload>(gameSubscriptionExchange);
 }
+
+let playerPseudo = ref(playerStore.player?.pseudo ?? "");
+
+watch(playerPseudo, () => {{
+  if (!playerStore.player) {
+    return;
+  }
+
+  const updatePlayerPseudoPayload: UpdatePlayerPseudoPayload = {
+    player_id: playerStore.player?.id,
+    new_pseudo: playerPseudo.value
+  }
+
+  const updatePlayerPseudoExchange: WsExchangeTemplate<UpdatePlayerPseudoPayload> = {
+    type: "update_player_pseudo",
+    payload: updatePlayerPseudoPayload,
+  }
+
+  websocketService.send<UpdatePlayerPseudoPayload>(updatePlayerPseudoExchange);
+  playerStore.player.pseudo = playerPseudo.value
+}})
+
+
 </script>
 
 <template>
@@ -99,8 +124,7 @@ function sendSubscriptionToGame(): void {
     <h1 class="text-4xl font-bold">Strategia</h1>
 
     <br>
-
-    <input class="bg-transparent text-sm border border-slate-200 rounded-md px-3 py-2 w-96" :placeholder="playerStore.player?.id">
+    <input v-model="playerPseudo" class="bg-transparent text-sm border border-slate-200 rounded-md px-3 py-2 w-96" :placeholder="playerStore.player?.pseudo">
     <br />
 
     <button

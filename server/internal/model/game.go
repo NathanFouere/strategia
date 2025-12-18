@@ -47,6 +47,9 @@ func (g *Game) RemovePlayer(playerId uuid.UUID) error {
 func (g *Game) Start() {
 	fmt.Println("Game started !")
 	ticker := time.NewTicker(1 * time.Second)
+	for i := 0; i < len(g.Players); i++ {
+		fmt.Println("PLAYER PSEUDO IS", g.Players[i].Pseudo)
+	}
 	go func() {
 		for {
 			select {

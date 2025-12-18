@@ -44,10 +44,11 @@ func getRandomColor() color.Color {
 	return colors[idx]
 }
 
-func InitPlayer(pseudo string, conn *websocket.Conn) *Player {
+func InitPlayer(conn *websocket.Conn) *Player {
+	playerId := uuid.New()
 	return &Player{
-		ID:     uuid.New(),
-		Pseudo: pseudo,
+		ID:     playerId,
+		Pseudo: playerId.String(),
 		Game:   nil,
 		Color:  getRandomColor(),
 		WsCon:  conn,
@@ -56,4 +57,8 @@ func InitPlayer(pseudo string, conn *websocket.Conn) *Player {
 
 func (p *Player) AssignToGame(game *Game) {
 	p.Game = game
+}
+
+func (p *Player) UpdatePseudo(newPseudo string) {
+	p.Pseudo = newPseudo
 }
