@@ -8,39 +8,39 @@ import container from "@/container/container.ts";
 import type WaitingGamePayload from "@/ws-exchange/waiting-game-payload.ts";
 import {usePendingGameStore} from "@/stores/pending-game.store.ts";
 import type GameSubscriptionPayload from "@/ws-exchange/game-subscription-payload.ts";
-import type {WsExchangeTemplate} from "@/ws-exchange/ws-exchange-template.ts";
+import {
+  WS_MESSAGES_TYPE,
+  type WsExchangeTemplate,
+  type WsPayloadPerType
+} from "@/ws-exchange/ws-exchange-template.ts";
 import router from "@/router";
 import type RedirectToGamePayload from "@/ws-exchange/redirect-to-game-payload.ts";
 import type GameUnsubscribePayload from "@/ws-exchange/game-unsubscribe-payload.ts";
 import type SetInWaitingLobbyPayload from "@/ws-exchange/set-in-waiting-lobby-payload.ts";
 import {ref, watch} from "vue";
 import type UpdatePlayerPseudoPayload from "@/ws-exchange/update-player-pseudo-payload.ts";
+import GenerateWsTemplate from "@/utils/generate-ws-template.ts";
 
 const playerStore = usePlayerStore();
 const pendingGameStore = usePendingGameStore();
 const websocketService: WebSocketService = container.get(WebSocketService);
 
 if (!playerStore.player) {
-  const cb = (e: ConnectionPayload) => {
+  const cb = (payload: ConnectionPayload) => {
     const player: Player = {
-      id: e.player_id,
-      pseudo: e.player_pseudo,
+      id: payload.player_id,
+      pseudo: payload.player_pseudo,
     };
 
     playerStore.setPlayer(player);
   }
-  websocketService.subscribe<ConnectionPayload>("connexion_exchange", cb);
+  websocketService.subscribe(WS_MESSAGES_TYPE.CONNECTION_EXCHANGE, cb);
 } else {
   const setInWaitingLobbyPayload: SetInWaitingLobbyPayload = {
     player_id: playerStore.player!.id
   };
 
-  const setInWaitingLobbyExchange: WsExchangeTemplate<SetInWaitingLobbyPayload> = {
-    type: "set_in_waiting_lobby",
-    payload: setInWaitingLobbyPayload
-  };
-
-  websocketService.send<SetInWaitingLobbyPayload>(setInWaitingLobbyExchange);
+  websocketService.send(GenerateWsTemplate(WS_MESSAGES_TYPE.SET_IN_WAITING_LOBBY, setInWaitingLobbyPayload));
 }
 
 const cb2 = (e: WaitingGamePayload) => {
@@ -51,7 +51,7 @@ const cb2 = (e: WaitingGamePayload) => {
   pendingGameStore.setSubscribedToGame(e.is_player_waiting_for_game);
 }
 
-websocketService.subscribe<WaitingGamePayload>("waiting_game_exchange", cb2)
+websocketService.subscribe(WS_MESSAGES_TYPE.WAITING_GAME, cb2)
 
 const cb3 = (e: RedirectToGamePayload) => {
   websocketService.unsubscribe("connexion_exchange");
@@ -61,7 +61,7 @@ const cb3 = (e: RedirectToGamePayload) => {
   router.push('/game?gameId=' + e.game_id);
 }
 
-websocketService.subscribe<RedirectToGamePayload>("redirect_to_game", cb3)
+websocketService.subscribe(WS_MESSAGES_TYPE.REDIRECT_TO_GAME, cb3)
 
 // TODO => clarifier le fait que ça inscrive ET desinscrive
 function sendSubscriptionToGame(): void {
@@ -73,12 +73,7 @@ function sendSubscriptionToGame(): void {
       player_id: playerStore.player!.id
     }
 
-    const gameUnsubscribeExchange: WsExchangeTemplate<GameUnsubscribePayload> = {
-      type: "game_unsubscribe",
-      payload: gameUnsubscribePayload
-    }
-
-    websocketService.send<GameUnsubscribePayload>(gameUnsubscribeExchange);
+    websocketService.send(GenerateWsTemplate(WS_MESSAGES_TYPE.GAME_UNSUBSCRIBE, gameUnsubscribePayload));
 
     return;
   }
@@ -87,12 +82,7 @@ function sendSubscriptionToGame(): void {
     player_id: playerStore.player!.id
   }
 
-  const gameSubscriptionExchange: WsExchangeTemplate<GameSubscriptionPayload> = {
-    type: "game_subscription",
-    payload: gameSubscriptionPayload,
-  }
-
-  websocketService.send<GameSubscriptionPayload>(gameSubscriptionExchange);
+  websocketService.send(GenerateWsTemplate(WS_MESSAGES_TYPE.GAME_SUBSCRIPTION, gameSubscriptionPayload));
 }
 
 let playerPseudo = ref(playerStore.player?.pseudo ?? "");
@@ -107,12 +97,7 @@ watch(playerPseudo, () => {{
     new_pseudo: playerPseudo.value
   }
 
-  const updatePlayerPseudoExchange: WsExchangeTemplate<UpdatePlayerPseudoPayload> = {
-    type: "update_player_pseudo",
-    payload: updatePlayerPseudoPayload,
-  }
-
-  websocketService.send<UpdatePlayerPseudoPayload>(updatePlayerPseudoExchange);
+  websocketService.send(GenerateWsTemplate(WS_MESSAGES_TYPE.UPDATE_PLAYER_PSEUDO, updatePlayerPseudoPayload));
   playerStore.player.pseudo = playerPseudo.value
 }})
 

@@ -37,6 +37,7 @@ func (g *Game) RemovePlayer(playerId uuid.UUID) error {
 			// c
 			g.Players[i] = g.Players[len(g.Players)-1]
 			g.Players = g.Players[:len(g.Players)-1]
+
 			return nil
 		}
 	}

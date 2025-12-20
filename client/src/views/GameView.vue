@@ -4,9 +4,10 @@ import Game from "@/components/Game.vue";
 import {useRoute, useRouter} from "vue-router";
 import {WebSocketService} from "@/services/websocket.service.ts";
 import container from "@/container/container.ts";
-import type {WsExchangeTemplate} from "@/ws-exchange/ws-exchange-template.ts";
+import {WS_MESSAGES_TYPE, type WsExchangeTemplate} from "@/ws-exchange/ws-exchange-template.ts";
 import {usePlayerStore} from "@/stores/player.store.ts";
 import type ExitGamePayload from "@/ws-exchange/exit-game-payload.ts";
+import GenerateWsTemplate from "@/utils/generate-ws-template.ts";
 
 const router = useRouter();
 const websocketService: WebSocketService = container.get(WebSocketService);
@@ -21,12 +22,7 @@ function redirectToHome() {
     game_id: gameId,
   }
 
-  const exitGameExchange: WsExchangeTemplate<ExitGamePayload> = {
-    type: "exit_game",
-    payload: exitGamePayload
-  }
-
-  websocketService.send<ExitGamePayload>(exitGameExchange);
+  websocketService.send(GenerateWsTemplate(WS_MESSAGES_TYPE.EXIT_GAME, exitGamePayload));
 
   router.push('/')
 }
