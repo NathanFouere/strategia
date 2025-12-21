@@ -63,7 +63,6 @@ const cb3 = (e: RedirectToGamePayload) => {
 
 websocketService.subscribe(WS_MESSAGES_TYPE.REDIRECT_TO_GAME, cb3)
 
-// TODO => clarifier le fait que ça inscrive ET desinscrive
 function sendSubscriptionToGame(): void {
   if (!playerStore.hasConnectedPlayer) {
     throw new Error("Should have a connected player");

@@ -67,11 +67,21 @@ func (mh *MainHandler) wsHandler(w http.ResponseWriter, r *http.Request) {
 	mh.playerRepository.ClientsInLobby[player.ID] = player
 	mh.mutex.Unlock()
 
-	// todo => bouger dans un service
 	connexionExchange := &ws_exchange.ConnectionPayload{
 		PlayerId:     player.ID.String(),
 		PlayerPseudo: player.Pseudo,
 	}
+
+	go func() {
+		for msg := range player.Client.Send {
+			fmt.Println("sent")
+			err := player.Client.Conn.WriteMessage(websocket.TextMessage, msg)
+			if err != nil {
+				fmt.Println("error", err)
+				return
+			}
+		}
+	}()
 
 	data, err := json.Marshal(connexionExchange.ToWsExchange())
 	err = conn.WriteMessage(websocket.TextMessage, data)

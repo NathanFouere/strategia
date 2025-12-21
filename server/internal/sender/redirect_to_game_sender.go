@@ -26,26 +26,20 @@ func NewRedirectToGameSender(
 }
 
 func (s *RedirectToGameSender) SendRedirectToGame() error {
-	for client := range s.pr.ClientsInLobby {
-		isClientWaitingForGame := false
-		_, ok := s.pr.WaitingGameClients[client]
-		if ok {
-			isClientWaitingForGame = true
-		}
-		data := &ws_exchange.WaitingGamePayload{
-			SecondsBeforeLaunch:    10 - s.gr.CounterBetweenGames, // TODO => enlever hardcode
-			GameId:                 s.gr.PendingGame.ID.String(),
-			NumberOfWaitingPlayers: len(s.pr.WaitingGameClients),
-			IsPlayerWaitingForGame: isClientWaitingForGame,
-			IsGameLaunching:        s.gr.CounterBetweenGames == 0,
-		}
+	data := &ws_exchange.RedirectToGamePayload{
+		GameId: s.gr.PendingGame.ID.String(),
+	}
 
-		bytes, err := json.Marshal(data.ToWsExchange())
-		if err != nil {
-			return err
-		}
+	bytes, err := json.Marshal(data.ToWsExchange())
+	if err != nil {
+		return err
+	}
 
-		s.pr.ClientsInLobby[client].Client.Send <- bytes
+	for client := range s.pr.WaitingGameClients {
+		s.pr.WaitingGameClients[client].Client.Send <- bytes
+		// TODO => gérer le fait que cela ne soit plus supprimé avec les read dans main handler
+		/*		delete(s.pr.WaitingGameClients, client)
+				delete(s.pr.ClientsInLobby, client)*/
 	}
 
 	return nil
