@@ -6,6 +6,7 @@ import (
 	"server/internal/handler"
 	"server/internal/repository"
 	"server/internal/service"
+	"server/internal/tmp"
 	"server/pkg/logger"
 	"sync"
 
@@ -55,8 +56,73 @@ func SetupContainer() error {
 		slog.Error("Error occured while providing game generator service", "err", err)
 	}
 
-	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository, gameRepository *repository.GameRepository) *handler.MainHandler {
-		return handler.NewMainHandler(logger, playerRepository, gameRepository)
+	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository, gameRepository *repository.GameRepository) *handler.ExitGameHandler {
+		return handler.NewExitGameHandler(playerRepository, gameRepository, logger)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing exit game handler", "err", err)
+	}
+
+	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository, gameRepository *repository.GameRepository) *handler.PixelClickHandler {
+		return handler.NewPixelClickHandler(playerRepository, gameRepository, logger)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing pixel click handler", "err", err)
+	}
+
+	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository) *handler.SetInWaitingLobbyHandler {
+		return handler.NewSetInWaitingLobbyHandler(logger, playerRepository)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing set in waiting lobby handler", "err", err)
+	}
+
+	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository, gameRepository *repository.GameRepository) *handler.SubscribeToGameHandler {
+		return handler.NewSubscribeToGameHandler(playerRepository, gameRepository, logger)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing subscribe to game handler", "err", err)
+	}
+
+	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository, gameRepository *repository.GameRepository) *handler.UnsubscribeFromGameHandler {
+		return handler.NewUnsubscribeFromGameHandler(logger, playerRepository, gameRepository)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing unsubscribe to game handler", "err", err)
+	}
+
+	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository) *handler.UpdatePlayerPseudoHandler {
+		return handler.NewUpdatePlayerPseudoHandler(playerRepository, logger)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing unsubscribe to game handler", "err", err)
+	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+		exitGameHandler *handler.ExitGameHandler,
+		clickHandler *handler.PixelClickHandler,
+		setInWaitingLobbyHandler *handler.SetInWaitingLobbyHandler,
+		toGameHandler *handler.SubscribeToGameHandler,
+		fromGameHandler *handler.UnsubscribeFromGameHandler,
+		pseudoPayload *handler.UpdatePlayerPseudoHandler,
+	) *service.MessageRouterService {
+		return service.NewMessageRouterService(
+			logger,
+			exitGameHandler,
+			clickHandler,
+			setInWaitingLobbyHandler,
+			toGameHandler,
+			fromGameHandler,
+			pseudoPayload,
+		)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing message router service", "err", err)
+	}
+
+	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository, gameRepository *repository.GameRepository, messageRouterService *service.MessageRouterService) *tmp.MainHandler {
+		return tmp.NewMainHandler(logger, playerRepository, gameRepository, messageRouterService)
 	})
 	if err != nil {
 		slog.Error("Error occured while providing main handler", "err", err)

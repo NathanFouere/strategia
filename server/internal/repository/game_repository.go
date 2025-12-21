@@ -9,14 +9,16 @@ import (
 )
 
 type GameRepository struct {
-	games  []*model.Game // TODO => peut probablemetn etre optimiser en utilisant une map
-	logger *logger.LoggerService
+	games       []*model.Game
+	logger      *logger.LoggerService
+	PendingGame *model.Game
 }
 
 func NewGameRepository(loggerService *logger.LoggerService) *GameRepository {
 	return &GameRepository{
-		games:  []*model.Game{},
-		logger: loggerService,
+		games:       []*model.Game{},
+		logger:      loggerService,
+		PendingGame: nil,
 	}
 }
 

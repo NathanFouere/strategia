@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"server/internal/container"
-	"server/internal/handler"
+	"server/internal/tmp"
 )
 
 /*var upgrader = websocket.Upgrader{
@@ -101,7 +101,7 @@ func main() {
 		fmt.Println("error :", err)
 	}
 
-	err = container.GetContainer().Invoke(func(mainHandler *handler.MainHandler) {
+	err = container.GetContainer().Invoke(func(mainHandler *tmp.MainHandler) {
 		mainHandler.Launch()
 	})
 

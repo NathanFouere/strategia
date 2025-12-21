@@ -29,7 +29,6 @@ onMounted(() => {
   websocketService.subscribe<ServerUpdatePayload>('server_update_datas', cb)
 
   canvas.addEventListener('click', (evt) => {
-    console.log('send')
     const rect = canvas.getBoundingClientRect()
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height

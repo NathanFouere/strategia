@@ -6,17 +6,22 @@ import (
 	"server/pkg/logger"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 )
 
 type PlayerRepository struct {
-	players []*model.Player // Solution temporaire ou on stocke tt les joueurs en mémoire
-	logger  *logger.LoggerService
+	players            []*model.Player
+	logger             *logger.LoggerService
+	ClientsInLobby     map[uuid.UUID]*websocket.Conn
+	WaitingGameClients map[uuid.UUID]*websocket.Conn
 }
 
 func NewPlayerRepository(loggerService *logger.LoggerService) *PlayerRepository {
 	return &PlayerRepository{
-		players: []*model.Player{},
-		logger:  loggerService,
+		players:            []*model.Player{},
+		logger:             loggerService,
+		ClientsInLobby:     make(map[uuid.UUID]*websocket.Conn),
+		WaitingGameClients: make(map[uuid.UUID]*websocket.Conn),
 	}
 }
 
@@ -34,8 +39,11 @@ func (pr *PlayerRepository) GetPlayerFromId(uuid uuid.UUID) (*model.Player, erro
 	return nil, errors.New("Couldn't find player of id " + uuid.String())
 }
 
+func (pr *PlayerRepository) AddPlayerToClientLobby(p *model.Player) {
+	pr.ClientsInLobby[p.ID] = p.WsCon
+}
+
 func (pr *PlayerRepository) RemovePlayer(uuid uuid.UUID) error {
-	// moche et gourmand mais marche pour le moment
 	for i := 0; i < len(pr.players); i++ {
 		if pr.players[i].ID == uuid {
 			// cf . https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
