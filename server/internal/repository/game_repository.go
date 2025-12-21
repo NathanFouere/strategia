@@ -9,16 +9,20 @@ import (
 )
 
 type GameRepository struct {
-	games       []*model.Game
-	logger      *logger.LoggerService
-	PendingGame *model.Game
+	games               []*model.Game
+	logger              *logger.LoggerService
+	PendingGame         *model.Game
+	OngoingGames        []*model.Game
+	CounterBetweenGames int // TODO => move
 }
 
 func NewGameRepository(loggerService *logger.LoggerService) *GameRepository {
 	return &GameRepository{
-		games:       []*model.Game{},
-		logger:      loggerService,
-		PendingGame: nil,
+		games:               []*model.Game{},
+		logger:              loggerService,
+		PendingGame:         nil,
+		CounterBetweenGames: 0,
+		OngoingGames:        []*model.Game{},
 	}
 }
 

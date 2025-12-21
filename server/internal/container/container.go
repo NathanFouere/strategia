@@ -3,10 +3,11 @@ package container
 
 import (
 	"log/slog"
+	"server/internal"
 	"server/internal/handler"
 	"server/internal/repository"
+	"server/internal/sender"
 	"server/internal/service"
-	"server/internal/tmp"
 	"server/pkg/logger"
 	"sync"
 
@@ -121,8 +122,63 @@ func SetupContainer() error {
 		slog.Error("Error occured while providing message router service", "err", err)
 	}
 
-	err = GetContainer().Provide(func(logger *logger.LoggerService, playerRepository *repository.PlayerRepository, gameRepository *repository.GameRepository, messageRouterService *service.MessageRouterService) *tmp.MainHandler {
-		return tmp.NewMainHandler(logger, playerRepository, gameRepository, messageRouterService)
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+		pr *repository.PlayerRepository,
+		gr *repository.GameRepository,
+	) *sender.PendingGameUpdateSender {
+		return sender.NewPendingGameUpdateSender(
+			logger,
+			pr,
+			gr,
+		)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing pending game update sender", "err", err)
+	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+		pr *repository.PlayerRepository,
+		gr *repository.GameRepository,
+	) *sender.RedirectToGameSender {
+		return sender.NewRedirectToGameSender(
+			pr,
+			gr,
+			logger,
+		)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing pending redirect to game sender", "err", err)
+	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+		pr *repository.PlayerRepository,
+		gr *repository.GameRepository,
+		redirectToGameSender *sender.RedirectToGameSender,
+		pendingGameUpdateSender *sender.PendingGameUpdateSender,
+	) *service.UpdateService {
+		return service.NewUpdateService(
+			pr,
+			gr,
+			logger,
+			pendingGameUpdateSender,
+			redirectToGameSender,
+		)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing pending redirect to game sender", "err", err)
+	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+		playerRepository *repository.PlayerRepository,
+		gameRepository *repository.GameRepository,
+		messageRouterService *service.MessageRouterService,
+		updateService *service.UpdateService,
+	) *internal.MainHandler {
+		return internal.NewMainHandler(logger, playerRepository, gameRepository, messageRouterService, updateService)
 	})
 	if err != nil {
 		slog.Error("Error occured while providing main handler", "err", err)

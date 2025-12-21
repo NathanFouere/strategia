@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 )
 
 type Game struct {
@@ -126,10 +125,7 @@ func (g *Game) Update() error {
 	}
 
 	for _, player := range g.Players {
-		err = player.WsCon.WriteMessage(websocket.TextMessage, bytes)
-		if err != nil {
-			return err
-		}
+		player.Client.Send <- bytes
 	}
 	g.TilesToRender = map[string]string{}
 	return nil

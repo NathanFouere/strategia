@@ -13,7 +13,7 @@ type Player struct {
 	Pseudo string
 	Game   *Game
 	Color  color.Color
-	WsCon  *websocket.Conn
+	Client *Client
 }
 
 func getRandomColor() color.Color {
@@ -51,7 +51,7 @@ func InitPlayer(conn *websocket.Conn) *Player {
 		Pseudo: playerId.String(),
 		Game:   nil,
 		Color:  getRandomColor(),
-		WsCon:  conn,
+		Client: InitClient(conn),
 	}
 }
 

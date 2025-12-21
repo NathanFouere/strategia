@@ -6,22 +6,21 @@ import (
 	"server/pkg/logger"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 )
 
 type PlayerRepository struct {
 	players            []*model.Player
 	logger             *logger.LoggerService
-	ClientsInLobby     map[uuid.UUID]*websocket.Conn
-	WaitingGameClients map[uuid.UUID]*websocket.Conn
+	ClientsInLobby     map[uuid.UUID]*model.Player
+	WaitingGameClients map[uuid.UUID]*model.Player
 }
 
 func NewPlayerRepository(loggerService *logger.LoggerService) *PlayerRepository {
 	return &PlayerRepository{
 		players:            []*model.Player{},
 		logger:             loggerService,
-		ClientsInLobby:     make(map[uuid.UUID]*websocket.Conn),
-		WaitingGameClients: make(map[uuid.UUID]*websocket.Conn),
+		ClientsInLobby:     make(map[uuid.UUID]*model.Player),
+		WaitingGameClients: make(map[uuid.UUID]*model.Player),
 	}
 }
 
@@ -40,7 +39,7 @@ func (pr *PlayerRepository) GetPlayerFromId(uuid uuid.UUID) (*model.Player, erro
 }
 
 func (pr *PlayerRepository) AddPlayerToClientLobby(p *model.Player) {
-	pr.ClientsInLobby[p.ID] = p.WsCon
+	pr.ClientsInLobby[p.ID] = p
 }
 
 func (pr *PlayerRepository) RemovePlayer(uuid uuid.UUID) error {
