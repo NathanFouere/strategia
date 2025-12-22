@@ -83,7 +83,10 @@ func (mh *MainHandler) wsHandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			mh.playerRepository.RemovePlayer(player.ID)
+			err := mh.playerRepository.RemovePlayer(player.ID)
+			if err != nil {
+				mh.logger.Error("Error when removing player following error in reading message", "player id", player.ID, "error", err)
+			}
 			break
 		}
 		mh.broadcast <- message
@@ -114,7 +117,11 @@ func (mh *MainHandler) Launch() {
 	ticker := time.NewTicker(time.Duration(tickerMainMenuSecond) * time.Second)
 	go func() {
 		for range ticker.C {
-			mh.updateService.Update()
+			err = mh.updateService.Update()
+			if err != nil {
+				mh.logger.Error("Error while updating", "error", err)
+				return
+			}
 		}
 	}()
 	http.HandleFunc("/ws", mh.wsHandler)
