@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"server/internal"
 	"server/internal/container"
 )
@@ -9,7 +8,7 @@ import (
 func main() {
 	err := container.SetupContainer()
 	if err != nil {
-		fmt.Println("error :", err)
+		panic("Error during container setup")
 	}
 
 	err = container.GetContainer().Invoke(func(mainHandler *internal.MainHandler) {

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"server/internal/repository"
 	"server/internal/ws_exchange"
 	"server/pkg/logger"
@@ -38,12 +37,10 @@ func (h *UnsubscribeFromGameHandler) Handle(gameUnsubscribePayload *ws_exchange.
 	_, ok := h.pr.WaitingGameClients[parsedUUid]
 	if ok {
 		h.logger.Info("Unsubscribe player from game", "playerid", parsedUUid, "gameid", h.gr.PendingGame.ID)
-		fmt.Println("NB PLAYER IN PENDING GAME BEFORE", len(h.gr.PendingGame.Players))
 		err := h.gr.PendingGame.RemovePlayer(parsedUUid)
 		if err != nil {
 			return
 		}
-		fmt.Println("NB PLAYER IN PENDING GAME AFTER", len(h.gr.PendingGame.Players))
 		delete(h.pr.WaitingGameClients, parsedUUid)
 		return
 	}

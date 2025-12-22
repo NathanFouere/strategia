@@ -4,6 +4,7 @@ package container
 import (
 	"log/slog"
 	"server/internal"
+	"server/internal/broadcaster"
 	"server/internal/handler"
 	"server/internal/repository"
 	"server/internal/sender"
@@ -154,10 +155,24 @@ func SetupContainer() error {
 
 	err = GetContainer().Provide(func(
 		logger *logger.LoggerService,
+		updateGameService *broadcaster.GameUpdateBroadcaster,
+	) *service.StartGameService {
+		return service.NewStartGameService(
+			logger,
+			updateGameService,
+		)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing pending start game service", "err", err)
+	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
 		pr *repository.PlayerRepository,
 		gr *repository.GameRepository,
 		redirectToGameSender *sender.RedirectToGameSender,
 		pendingGameUpdateSender *sender.PendingGameUpdateSender,
+		startGameService *service.StartGameService,
 	) *service.UpdateService {
 		return service.NewUpdateService(
 			pr,
@@ -165,11 +180,27 @@ func SetupContainer() error {
 			logger,
 			pendingGameUpdateSender,
 			redirectToGameSender,
+			startGameService,
 		)
 	})
 	if err != nil {
-		slog.Error("Error occured while providing pending redirect to game sender", "err", err)
+		slog.Error("Error occured while providing update service", "err", err)
 	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+	) *sender.ConnectionExchangeSender {
+		return sender.NewConnectionExchangeSender(logger)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing connection exchange sender", "err", err)
+	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+	) *broadcaster.GameUpdateBroadcaster {
+		return broadcaster.NewGameUpdateBroadcaster(logger)
+	})
 
 	err = GetContainer().Provide(func(
 		logger *logger.LoggerService,
@@ -177,8 +208,9 @@ func SetupContainer() error {
 		gameRepository *repository.GameRepository,
 		messageRouterService *service.MessageRouterService,
 		updateService *service.UpdateService,
+		connectionExchangeSender *sender.ConnectionExchangeSender,
 	) *internal.MainHandler {
-		return internal.NewMainHandler(logger, playerRepository, gameRepository, messageRouterService, updateService)
+		return internal.NewMainHandler(logger, playerRepository, gameRepository, messageRouterService, updateService, connectionExchangeSender)
 	})
 	if err != nil {
 		slog.Error("Error occured while providing main handler", "err", err)

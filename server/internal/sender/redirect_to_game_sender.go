@@ -37,9 +37,8 @@ func (s *RedirectToGameSender) SendRedirectToGame() error {
 
 	for client := range s.pr.WaitingGameClients {
 		s.pr.WaitingGameClients[client].Client.Send <- bytes
-		// TODO => gérer le fait que cela ne soit plus supprimé avec les read dans main handler
-		/*		delete(s.pr.WaitingGameClients, client)
-				delete(s.pr.ClientsInLobby, client)*/
+		delete(s.pr.WaitingGameClients, client)
+		delete(s.pr.ClientsInLobby, client)
 	}
 
 	return nil

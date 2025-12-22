@@ -15,6 +15,7 @@ type UpdateService struct {
 	logger                  *logger.LoggerService
 	pendingGameUpdateSender *sender.PendingGameUpdateSender
 	redirectToGameSender    *sender.RedirectToGameSender
+	startGameService        *StartGameService
 }
 
 func NewUpdateService(
@@ -23,6 +24,7 @@ func NewUpdateService(
 	logger *logger.LoggerService,
 	pendingGameUpdateSender *sender.PendingGameUpdateSender,
 	redirectToGameSender *sender.RedirectToGameSender,
+	startGameService *StartGameService,
 ) *UpdateService {
 	return &UpdateService{
 		pr:                      pr,
@@ -30,6 +32,7 @@ func NewUpdateService(
 		logger:                  logger,
 		pendingGameUpdateSender: pendingGameUpdateSender,
 		redirectToGameSender:    redirectToGameSender,
+		startGameService:        startGameService,
 	}
 }
 
@@ -38,9 +41,8 @@ func (s *UpdateService) Update() error {
 	s.gr.CounterBetweenGames++
 	if s.gr.CounterBetweenGames == 10 && len(s.gr.PendingGame.Players) > 0 { // TODO => enelever hardcode
 		s.redirectToGameSender.SendRedirectToGame()
-		s.gr.PendingGame.Start()
+		s.startGameService.Start(s.gr.PendingGame)
 		s.gr.OngoingGames = append(s.gr.OngoingGames, s.gr.PendingGame)
-		s.logger.Info("New game launched with ID", "id", s.gr.PendingGame.ID)
 		s.gr.PendingGame = model.InitGame()
 		s.gr.AddGame(s.gr.PendingGame)
 		s.pr.WaitingGameClients = make(map[uuid.UUID]*model.Player)

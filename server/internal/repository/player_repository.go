@@ -11,8 +11,8 @@ import (
 type PlayerRepository struct {
 	players            []*model.Player
 	logger             *logger.LoggerService
-	ClientsInLobby     map[uuid.UUID]*model.Player
-	WaitingGameClients map[uuid.UUID]*model.Player
+	ClientsInLobby     map[uuid.UUID]*model.Player // TODO => rendre privé
+	WaitingGameClients map[uuid.UUID]*model.Player // TODO => rendre privé
 }
 
 func NewPlayerRepository(loggerService *logger.LoggerService) *PlayerRepository {
@@ -43,6 +43,8 @@ func (pr *PlayerRepository) AddPlayerToClientLobby(p *model.Player) {
 }
 
 func (pr *PlayerRepository) RemovePlayer(uuid uuid.UUID) error {
+	delete(pr.ClientsInLobby, uuid)
+	delete(pr.WaitingGameClients, uuid)
 	for i := 0; i < len(pr.players); i++ {
 		if pr.players[i].ID == uuid {
 			// cf . https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
