@@ -2,9 +2,11 @@ package sender
 
 import (
 	"encoding/json"
+	"os"
 	"server/internal/repository"
 	"server/internal/ws_exchange"
 	"server/pkg/logger"
+	"strconv"
 )
 
 type PendingGameUpdateSender struct {
@@ -32,8 +34,14 @@ func (s *PendingGameUpdateSender) SendPendingGameUpdate() error {
 		if ok {
 			isClientWaitingForGame = true
 		}
+
+		timeBetweenGame, err := strconv.Atoi(os.Getenv("TIME_BETWEEN_GAME"))
+		if err != nil {
+			return err
+		}
+
 		data := &ws_exchange.WaitingGamePayload{
-			SecondsBeforeLaunch:    10 - s.gr.CounterBetweenGames, // TODO => enlever hardcode
+			SecondsBeforeLaunch:    timeBetweenGame - s.gr.CounterBetweenGames,
 			GameId:                 s.gr.PendingGame.ID.String(),
 			NumberOfWaitingPlayers: len(s.pr.WaitingGameClients),
 			IsPlayerWaitingForGame: isClientWaitingForGame,

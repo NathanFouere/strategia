@@ -2,13 +2,16 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"server/internal/model"
 	"server/internal/repository"
 	"server/internal/sender"
 	"server/internal/service"
 	"server/internal/ws_exchange"
 	"server/pkg/logger"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -103,7 +106,12 @@ func (mh *MainHandler) handleMessages() {
 }
 
 func (mh *MainHandler) Launch() {
-	ticker := time.NewTicker(1 * time.Second)
+	tickerMainMenuSecond, err := strconv.Atoi(os.Getenv("TICKER_MAIN_MENU_SECONDS"))
+	if err != nil {
+		panic("Couldn't load TICKER_MAIN_MENU_SECONDS in .env")
+	}
+
+	ticker := time.NewTicker(time.Duration(tickerMainMenuSecond) * time.Second)
 	go func() {
 		for range ticker.C {
 			mh.updateService.Update()
@@ -111,8 +119,8 @@ func (mh *MainHandler) Launch() {
 	}()
 	http.HandleFunc("/ws", mh.wsHandler)
 	go mh.handleMessages()
-	mh.logger.Info("Starting server on port", "port", "8080")
-	err := http.ListenAndServe(":8080", nil)
+	mh.logger.Info("Starting server on port", "port", os.Getenv("HTTP_PORT"))
+	err = http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("HTTP_PORT")), nil)
 	if err != nil {
 		mh.logger.Error("Error starting server", "error", err)
 		panic("Error starting server")

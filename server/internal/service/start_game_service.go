@@ -1,9 +1,11 @@
 package service
 
 import (
+	"os"
 	"server/internal/broadcaster"
 	"server/internal/model"
 	"server/pkg/logger"
+	"strconv"
 	"time"
 )
 
@@ -22,7 +24,12 @@ func NewStartGameService(logger *logger.LoggerService, gameUpdateBroadcaster *br
 func (s *StartGameService) Start(g *model.Game) {
 	s.logger.Info("New game launched with ID", "id", g.ID)
 
-	ticker := time.NewTicker(1 * time.Second)
+	tickerUpdateGameMs, err := strconv.Atoi(os.Getenv("TICKER_UPDATE_GAME_MS"))
+	if err != nil {
+		panic("Couldn't load TICKER_MAIN_MENU_SECONDS in .env")
+	}
+
+	ticker := time.NewTicker(time.Duration(tickerUpdateGameMs) * time.Millisecond)
 	go func() {
 		for range ticker.C {
 			err := s.gameUpdateBroadcaster.BroadcastGameState(g)

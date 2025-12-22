@@ -3,10 +3,17 @@ package main
 import (
 	"server/internal"
 	"server/internal/container"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := container.SetupContainer()
+	err := godotenv.Load()
+	if err != nil {
+		panic("Couldn't load .env")
+	}
+
+	err = container.SetupContainer()
 	if err != nil {
 		panic("Error during container setup")
 	}
