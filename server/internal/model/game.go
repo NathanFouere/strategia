@@ -37,7 +37,7 @@ func (g *Game) RemovePlayer(playerId uuid.UUID) error {
 		}
 	}
 
-	return errors.New("Couldn't find player of id in game")
+	return errors.New("couldn't find player of id in game")
 }
 
 func (g *Game) ReceivePixelClick(pixelClick *ws_exchange.PixelClickPayload) {

@@ -27,6 +27,10 @@ func (s *ConnectionExchangeSender) Send(player *model.Player) {
 	}
 
 	data, err := json.Marshal(connexionExchange.ToWsExchange())
+	if err != nil {
+		s.logger.Error("Error while parsing connection exchange", "err", err)
+		return
+	}
 	err = player.Client.Conn.WriteMessage(websocket.TextMessage, data)
 	if err != nil {
 		s.logger.Error("Error while send Connection Exchange", "err", err)

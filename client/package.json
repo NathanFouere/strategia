@@ -12,7 +12,9 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "lint": "eslint . --fix --cache",
+    "type-check:quiet": "vue-tsc --build --noEmit",
+    "lint:fix": "eslint . --fix --cache",
+    "lint:check": "eslint . --fix --quiet",
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {

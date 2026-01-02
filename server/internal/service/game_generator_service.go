@@ -41,7 +41,7 @@ func (gcs *GameGeneratorService) RemoveAttendingPlayer(uuid uuid.UUID) error {
 	}
 
 	gcs.logger.Error("Didn't find the player of uuid", "uuid", uuid)
-	return errors.New("Didnt find player")
+	return errors.New("didnt find player")
 }
 
 func (gcs *GameGeneratorService) StartGame() {

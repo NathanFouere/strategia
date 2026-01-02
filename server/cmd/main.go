@@ -21,4 +21,7 @@ func main() {
 	err = container.GetContainer().Invoke(func(mainHandler *internal.MainHandler) {
 		mainHandler.Launch()
 	})
+	if err != nil {
+		panic("Error while launching game")
+	}
 }

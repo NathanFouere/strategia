@@ -38,7 +38,7 @@ func (gr *GameRepository) GetGameOfId(gameId uuid.UUID) (*model.Game, error) {
 	}
 
 	gr.logger.Error("Didn't find the game of id", "id", gameId)
-	return nil, errors.New("Didn't find game")
+	return nil, errors.New("didn't find game")
 }
 
 func (gr *GameRepository) RemoveGame(gameId uuid.UUID) error {
@@ -52,5 +52,5 @@ func (gr *GameRepository) RemoveGame(gameId uuid.UUID) error {
 	}
 
 	gr.logger.Error("Didn't find the game of id", "id", gameId)
-	return errors.New("Didn't find game")
+	return errors.New("didn't find game")
 }

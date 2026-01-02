@@ -28,7 +28,7 @@ func (s *GameUpdateBroadcaster) buildTileUpdate(unparsedPos string, unparsedPlay
 	y := parts[1]
 	playerId, err := uuid.Parse(unparsedPlayerId)
 	if err != nil {
-		return nil, errors.New("Error while parsing player id")
+		return nil, errors.New("error while parsing player id")
 	}
 
 	player, err := game.FindPlayerOfIdInGame(playerId)

@@ -39,6 +39,9 @@ func (h *SubscribeToGameHandler) Handle(gameSubscriptionPayload *ws_exchange.Gam
 
 	h.logger.Info("Subscribe player to game", "playerid", parsedUUid, "gameid", h.gr.PendingGame.ID)
 	subscribingPlayer, err := h.pr.GetPlayerFromId(parsedUUid)
+	if err != nil {
+		h.logger.Error("Error while gett player from id", "id", parsedUUid, "err", err)
+	}
 	h.gr.PendingGame.AddPlayer(subscribingPlayer)
 	connCorrespondingToUuid := h.pr.ClientsInLobby[parsedUUid]
 	h.pr.WaitingGameClients[parsedUUid] = connCorrespondingToUuid

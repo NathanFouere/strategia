@@ -35,7 +35,7 @@ func (pr *PlayerRepository) GetPlayerFromId(uuid uuid.UUID) (*model.Player, erro
 		}
 	}
 
-	return nil, errors.New("Couldn't find player of id " + uuid.String())
+	return nil, errors.New("couldn't find player of id " + uuid.String())
 }
 
 func (pr *PlayerRepository) AddPlayerToClientLobby(p *model.Player) {
@@ -54,5 +54,5 @@ func (pr *PlayerRepository) RemovePlayer(uuid uuid.UUID) error {
 	}
 
 	pr.logger.Error("Didn't find the player of uuid", "uuid", uuid)
-	return errors.New("Didn't find player")
+	return errors.New("didn't find player")
 }

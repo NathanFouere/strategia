@@ -201,6 +201,9 @@ func SetupContainer() error {
 	) *broadcaster.GameUpdateBroadcaster {
 		return broadcaster.NewGameUpdateBroadcaster(logger)
 	})
+	if err != nil {
+		slog.Error("Error occured while providing game update broadcaster", "err", err)
+	}
 
 	err = GetContainer().Provide(func(
 		logger *logger.LoggerService,

@@ -1,9 +1,9 @@
 export interface ServerUpdate {
-  x: number;
-  y: number;
-  color: string;
+  x: number
+  y: number
+  color: string
 }
 
 export default interface ServerUpdatePayload {
-  update_datas: ServerUpdate[];
+  update_datas: ServerUpdate[]
 }

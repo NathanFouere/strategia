@@ -48,7 +48,10 @@ func (s *UpdateService) Update() error {
 	s.logger.Info("UPDATE: ", "pending game id", s.gr.PendingGame.ID, "counter", s.gr.CounterBetweenGames)
 	s.gr.CounterBetweenGames++
 	if s.gr.CounterBetweenGames == timeBetweenGame && len(s.gr.PendingGame.Players) > 0 {
-		s.redirectToGameSender.SendRedirectToGame()
+		err = s.redirectToGameSender.SendRedirectToGame()
+		if err != nil {
+			return err
+		}
 		s.startGameService.Start(s.gr.PendingGame)
 		s.gr.OngoingGames = append(s.gr.OngoingGames, s.gr.PendingGame)
 		s.gr.PendingGame = model.InitGame()
