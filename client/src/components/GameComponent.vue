@@ -1,36 +1,23 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { usePlayerStore } from '@/stores/player.store.ts'
-import { WebSocketService } from '@/services/websocket.service.ts'
 import container from '@/container/container.ts'
-import type PixelClickPayload from '@/ws-exchange/pixel-click-payload.ts'
-import { useRoute } from 'vue-router'
-import { WS_MESSAGES_TYPE } from '@/ws-exchange/ws-exchange-template.ts'
-import GenerateWsTemplate from '@/utils/generate-ws-template.ts'
-import type ServerUpdatePayload from '@/ws-exchange/server-update-payload'
+import { registerServerUpdateHandler } from '@/ws-handler/server-update.handler'
+import GameComponentPresenter from '@/presenter/game-component.presenter'
 
-const playerStore = usePlayerStore()
-const websocketService: WebSocketService = container.get(WebSocketService)
-const route = useRoute()
-const gameId = route.query.gameId as string
-
+const gameComponentPresenter: GameComponentPresenter = container.get(GameComponentPresenter)
+const props = defineProps<{
+  gameId: string
+}>()
 onMounted(() => {
   const canvas = document.getElementById('grid') as HTMLCanvasElement
   const ctx = canvas.getContext('2d')
-
-  const cb = (e: ServerUpdatePayload) => {
-    if (ctx == null) {
-      return
-    }
-    for (const update_data of e.update_datas) {
-      ctx.fillStyle = update_data.color
-      ctx.fillRect(update_data.x, update_data.y, 1, 1)
-    }
+  if (ctx == null) {
+    throw new Error('CTX is undefined')
   }
 
-  websocketService.subscribe(WS_MESSAGES_TYPE.SERVER_UPDATE_DATAS, cb)
+  registerServerUpdateHandler(ctx)
 
-  canvas.addEventListener('click', (evt) => {
+  canvas.addEventListener('click', (evt: MouseEvent) => {
     const rect = canvas.getBoundingClientRect()
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
@@ -38,19 +25,8 @@ onMounted(() => {
     const x = Math.floor((evt.clientX - rect.left) * scaleX)
     const y = Math.floor((evt.clientY - rect.top) * scaleY)
 
-    const pixelClickPayload: PixelClickPayload = {
-      id_player: playerStore.player!.id,
-      game_id: gameId,
-      x: x,
-      y: y,
-    }
-
-    websocketService.send(GenerateWsTemplate(WS_MESSAGES_TYPE.PIXEL_CLICK_EVT, pixelClickPayload))
+    gameComponentPresenter.handleClickOnBoard(props.gameId, x, y)
   })
-
-  if (ctx == null) {
-    return
-  }
 
   for (let y = 0; y < 1000; y++) {
     for (let x = 0; x < 1000; x++) {

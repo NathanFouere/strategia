@@ -1,12 +1,14 @@
 import type WaitingGamePayload from '@/ws-exchange/waiting-game-payload'
 import { WS_MESSAGES_TYPE } from '@/ws-exchange/ws-exchange-template'
-import type { WebSocketService } from '@/services/websocket.service'
+import { WebSocketService } from '@/services/websocket.service'
 import { usePendingGameStore } from '@/stores/pending-game.store'
+import container from '@/container/container'
 
-export function registerWaitingGameHandler(ws: WebSocketService) {
+export function registerWaitingGameHandler() {
+  const websocketService = container.get(WebSocketService)
   const pendingGameStore = usePendingGameStore()
 
-  ws.subscribe(WS_MESSAGES_TYPE.WAITING_GAME, (e: WaitingGamePayload) => {
+  websocketService.subscribe(WS_MESSAGES_TYPE.WAITING_GAME, (e: WaitingGamePayload) => {
     pendingGameStore.setPendingGameId(e.game_id)
     pendingGameStore.setSecondsBeforeLaunch(e.seconds_before_launch)
     pendingGameStore.setNumberOfWaitingPlayers(e.number_of_waiting_players)

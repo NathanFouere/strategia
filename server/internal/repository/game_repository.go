@@ -13,7 +13,7 @@ type GameRepository struct {
 	logger              *logger.LoggerService
 	PendingGame         *model.Game
 	OngoingGames        []*model.Game
-	CounterBetweenGames int // TODO => move
+	CounterBetweenGames int
 }
 
 func NewGameRepository(loggerService *logger.LoggerService) *GameRepository {
