@@ -33,6 +33,8 @@ func (s *UpdateGameStateService) UpdateGameState(g *model.Game) error {
 		s.logger.Error("Error while broadcasting game state", "game id", g.ID, "error", err)
 		return err
 	}
+	g.UpdatePlayers()
+	g.ResetTilesToRender()
 
 	return nil
 }
