@@ -33,6 +33,7 @@ func (s *GameUpdateBroadcaster) buildTileUpdate(unparsedPos string, unparsedPlay
 
 	player, err := game.FindPlayerOfIdInGame(playerId)
 	if err != nil {
+		game.RemovePlayer(playerId)
 		return nil, err
 	}
 	r, g, b, a := player.Color.RGBA()
