@@ -13,6 +13,7 @@ type Game struct {
 	TilesToRender map[string]string // pos x - y => id player
 	TilesDict     map[string]string // pos x - y => id player
 	Players       []*Player
+	Finished      bool
 }
 
 func InitGame() *Game {
@@ -20,6 +21,7 @@ func InitGame() *Game {
 		ID:            uuid.New(),
 		TilesToRender: map[string]string{},
 		TilesDict:     map[string]string{},
+		Finished:      false,
 	}
 }
 
@@ -58,4 +60,13 @@ func (g *Game) FindPlayerOfIdInGame(playerId uuid.UUID) (*Player, error) {
 
 func (g *Game) ResetState() {
 	g.TilesDict = map[string]string{}
+}
+
+func (g *Game) CheckGameFinished() {
+	// TODO => à compléter avec les conditions de victoire
+	g.Finished = g.GetNbPlayers() == 0
+}
+
+func (g *Game) GetNbPlayers() int {
+	return len(g.Players)
 }
