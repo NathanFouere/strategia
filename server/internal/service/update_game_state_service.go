@@ -47,7 +47,11 @@ func (s *UpdateGameStateService) UpdateGameState(g *model.Game) error {
 		s.logger.Info("Game finished", "game id", g.ID)
 		return nil
 	}
-	g.UpdatePlayers()
+	err = g.UpdatePlayers()
+	if err != nil {
+		return err
+	}
+
 	g.ResetTilesToRender()
 
 	return nil

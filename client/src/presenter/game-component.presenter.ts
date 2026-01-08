@@ -4,14 +4,21 @@ import { inject, injectable } from 'inversify'
 import type PixelClickPayload from '@/ws-exchange/pixel-click-payload.ts'
 import GenerateWsTemplate from '@/utils/generate-ws-template.ts'
 import { WS_MESSAGES_TYPE } from '@/ws-exchange/ws-exchange-template.ts'
+import ServerUpdateHandler from '@/ws-handler/server-update.handler'
 
 @injectable()
 export default class GameComponentPresenter {
   constructor(
     @inject(WebSocketService)
     private readonly wsService: WebSocketService,
+    @inject(ServerUpdateHandler)
+    private readonly serverUpdateHandler: ServerUpdateHandler,
     public playerStore = usePlayerStore(),
   ) {}
+
+  public initialize(ctx: CanvasRenderingContext2D): void {
+    this.serverUpdateHandler.subscribe(ctx)
+  }
 
   public handleClickOnBoard(gameId: string, x: number, y: number) {
     const pixelClickPayload: PixelClickPayload = {

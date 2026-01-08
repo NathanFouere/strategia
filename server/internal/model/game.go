@@ -49,11 +49,12 @@ func (g *Game) AddPlayer(player *Player) {
 }
 
 func (g *Game) RemovePlayer(playerId uuid.UUID) error {
-	if _, exists := g.Players[playerId.String()]; exists {
-		delete(g.Players, playerId.String())
+	if _, exists := g.Players[playerId.String()]; !exists {
+		return errors.New("couldn't find player of id in game")
 	}
 
-	return errors.New("couldn't find player of id in game")
+	delete(g.Players, playerId.String())
+	return nil
 }
 
 func (g *Game) ReceivePixelClick(pixelClick *ws_exchange.PixelClickPayload) {

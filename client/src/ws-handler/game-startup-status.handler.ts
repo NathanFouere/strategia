@@ -1,18 +1,27 @@
-import container from '@/container/container'
 import { WebSocketService } from '@/services/websocket.service'
 import { useOngoingGameStore } from '@/stores/ongoing-game.store'
 import type GameStartupStatusPayload from '@/ws-exchange/game-startup-status-payload'
 import { WS_MESSAGES_TYPE } from '@/ws-exchange/ws-exchange-template'
+import { inject, injectable } from 'inversify'
 
-export function registerGameStartupStatusHandler() {
-  const websocketService = container.get(WebSocketService)
-  const ongoingGameStore = useOngoingGameStore()
+@injectable()
+export default class GameStartupStatusHandler {
+  constructor(
+    @inject(WebSocketService)
+    private readonly wsService: WebSocketService,
+    public ongoingGameStore = useOngoingGameStore(),
+  ) {}
 
-  websocketService.subscribe(
-    WS_MESSAGES_TYPE.GAME_STARTUP_STATUS,
-    (e: GameStartupStatusPayload) => {
-      ongoingGameStore.setProgressionPercentage(e.progression_percentage)
-      ongoingGameStore.setGameStarted(e.game_started)
-    },
-  )
+  public subscribe(): void {
+    this.wsService.subscribe(
+      WS_MESSAGES_TYPE.GAME_STARTUP_STATUS,
+      (e: GameStartupStatusPayload) => {
+        this.ongoingGameStore.setProgressionPercentage(e.progression_percentage)
+        this.ongoingGameStore.setGameStarted(e.game_started)
+      },
+    )
+  }
+  public unsubscribe(): void {
+    this.wsService.unsubscribe(WS_MESSAGES_TYPE.GAME_STARTUP_STATUS)
+  }
 }

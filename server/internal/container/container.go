@@ -175,6 +175,9 @@ func SetupContainer() error {
 			gameRepository,
 		)
 	})
+	if err != nil {
+		slog.Error("Error occured while providing game loop service", "err", err)
+	}
 
 	err = GetContainer().Provide(func(
 		logger *logger.LoggerService,

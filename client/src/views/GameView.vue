@@ -13,7 +13,7 @@ const gameId = route.query.gameId as string // TODO => la répétition avec le c
 const gameViewPresenter = container.get(GameViewPresenter)
 
 onMounted(() => {
-  gameViewPresenter.handlePageMounted()
+  gameViewPresenter.initialize()
 })
 </script>
 
