@@ -8,6 +8,7 @@ import type GameUnsubscribePayload from '@/ws-exchange/game-unsubscribe-payload.
 import type GameSubscriptionPayload from '@/ws-exchange/game-subscription-payload.ts'
 import type UpdatePlayerPseudoPayload from '@/ws-exchange/update-player-pseudo-payload.ts'
 import type PixelClickPayload from '@/ws-exchange/pixel-click-payload.ts'
+import type GameStartupStatusPayload from './game-startup-status-payload'
 
 export const WS_MESSAGES_TYPE = {
   CONNECTION_EXCHANGE: 'connexion_exchange',
@@ -21,6 +22,7 @@ export const WS_MESSAGES_TYPE = {
   GAME_SUBSCRIPTION: 'game_subscription',
   UPDATE_PLAYER_PSEUDO: 'update_player_pseudo',
   PIXEL_CLICK_EVT: 'pixel_click_evt',
+  GAME_STARTUP_STATUS: 'game_startup_status',
 } as const
 
 // cf computed property name . https://dev.to/ahmad_tibibi/ts1166-a-computed-property-name-in-a-class-property-declaration-must-have-a-simple-literal-type-3k9j
@@ -36,6 +38,7 @@ export type WsPayloadPerType = {
   [WS_MESSAGES_TYPE.GAME_SUBSCRIPTION]: GameSubscriptionPayload
   [WS_MESSAGES_TYPE.UPDATE_PLAYER_PSEUDO]: UpdatePlayerPseudoPayload
   [WS_MESSAGES_TYPE.PIXEL_CLICK_EVT]: PixelClickPayload
+  [WS_MESSAGES_TYPE.GAME_STARTUP_STATUS]: GameStartupStatusPayload
 }
 
 export interface WsExchangeTemplate<T extends ExchangeTypes> {

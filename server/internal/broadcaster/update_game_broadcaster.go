@@ -54,10 +54,9 @@ func (s *GameUpdateBroadcaster) BroadcastGameState(g *model.Game) error {
 		updates = append(updates, *serverUpdateData)
 	}
 
-	serverUpdatePayload := &ws_exchange.ServerUpdatePayload{
+	data := &ws_exchange.ServerUpdatePayload{
 		ServerUpdateDatas: updates,
 	}
-	data := serverUpdatePayload
 
 	bytes, err := json.Marshal(data.ToWsExchange())
 	if err != nil {
@@ -67,6 +66,6 @@ func (s *GameUpdateBroadcaster) BroadcastGameState(g *model.Game) error {
 	for _, player := range g.Players {
 		player.Client.Send <- bytes
 	}
-	g.TilesToRender = map[string]string{}
+
 	return nil
 }

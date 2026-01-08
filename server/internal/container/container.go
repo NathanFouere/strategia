@@ -100,8 +100,12 @@ func SetupContainer() error {
 		slog.Error("Error occured while providing unsubscribe to game handler", "err", err)
 	}
 
-	err = GetContainer().Provide(func(logger *logger.LoggerService, gameUpdateBroadcaster *broadcaster.GameUpdateBroadcaster) *service.UpdateGameStateService {
-		return service.NewUpdateGameService(logger, gameUpdateBroadcaster)
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+		gameUpdateBroadcaster *broadcaster.GameUpdateBroadcaster,
+		gameStartupUpdateBroadcaster *broadcaster.GameStartupUpdateBroadcaster,
+	) *service.UpdateGameStateService {
+		return service.NewUpdateGameService(logger, gameUpdateBroadcaster, gameStartupUpdateBroadcaster)
 	})
 	if err != nil {
 		slog.Error("Error occured while providing update game service", "err", err)
@@ -238,6 +242,15 @@ func SetupContainer() error {
 	})
 	if err != nil {
 		slog.Error("Error occured while providing main handler", "err", err)
+	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+	) *broadcaster.GameStartupUpdateBroadcaster {
+		return broadcaster.NewGameStartupUpdateBroadcaster(logger)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing game startup update broadcaster", "err", err)
 	}
 
 	slog.Info("Container successfully initiated !")

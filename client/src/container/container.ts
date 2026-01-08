@@ -6,6 +6,7 @@ import JoinGameComponentPresenter from '@/presenter/join-game-component.presente
 import HomeViewPresenter from '@/presenter/home-view.presenter'
 import GameComponentPresenter from '@/presenter/game-component.presenter'
 import LeaveGameComponentPresenter from '@/presenter/leave-game-component.presenter'
+import GameViewPresenter from '@/presenter/game-view.presenter'
 
 const container: Container = new Container()
 
@@ -18,5 +19,6 @@ container.bind(JoinGameComponentPresenter).toSelf()
 container.bind(HomeViewPresenter).toSelf()
 container.bind(GameComponentPresenter).toSelf()
 container.bind(LeaveGameComponentPresenter).toSelf()
+container.bind(GameViewPresenter).toSelf()
 
 export default container

@@ -3,7 +3,9 @@ package model
 import (
 	"errors"
 	"fmt"
+	"os"
 	"server/internal/ws_exchange"
+	"strconv"
 
 	"github.com/google/uuid"
 )
@@ -14,17 +16,31 @@ type Game struct {
 	TilesDict        map[string]string  // pos x - y => id player
 	NbTilesPerPlayer map[string]int     // id player => nb tiles controlled
 	Players          map[string]*Player // id player => nb tiles controlled
+	Started          bool
 	Finished         bool
+	TimerBeforeStart int
 }
 
 func InitGame() *Game {
+	tickerUpdateGameMs, err := strconv.Atoi(os.Getenv("TICKER_UPDATE_GAME_MS"))
+	if err != nil {
+		panic("Couldn't read TICKER_UPDATE_GAME_MS env var")
+	}
+	startDelaySec, err := strconv.Atoi(os.Getenv("GAME_START_DELAY_SEC"))
+	if err != nil {
+		panic("Couldn't read GAME_START_DELAY_SEC env var")
+	}
+
+	timerBeforeStartTicks := startDelaySec * 1000 / tickerUpdateGameMs
 	return &Game{
 		ID:               uuid.New(),
 		TilesToRender:    map[string]string{},
 		TilesDict:        map[string]string{},
 		Players:          map[string]*Player{},
 		NbTilesPerPlayer: map[string]int{},
+		Started:          false,
 		Finished:         false,
+		TimerBeforeStart: timerBeforeStartTicks,
 	}
 }
 
@@ -79,6 +95,12 @@ func (g *Game) UpdatePlayers() error {
 func (g *Game) CheckGameFinished() {
 	// TODO => à compléter avec les conditions de victoire
 	g.Finished = g.GetNbPlayers() == 0
+}
+
+func (g *Game) CheckGameStarted() {
+	if g.TimerBeforeStart <= 0 {
+		g.Started = true
+	}
 }
 
 func (g *Game) GetNbPlayers() int {
