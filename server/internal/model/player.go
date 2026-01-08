@@ -9,11 +9,13 @@ import (
 )
 
 type Player struct {
-	ID     uuid.UUID
-	Pseudo string
-	Game   *Game
-	Color  color.Color
-	Client *Client
+	ID                uuid.UUID
+	Pseudo            string
+	Game              *Game
+	Color             color.Color
+	Client            *Client
+	Population        int
+	NbTilesControlled int
 }
 
 func getRandomColor() color.Color {
@@ -61,4 +63,9 @@ func (p *Player) AssignToGame(game *Game) {
 
 func (p *Player) UpdatePseudo(newPseudo string) {
 	p.Pseudo = newPseudo
+}
+
+func (p *Player) UpdatePopulation() {
+	// TODO => temporaire
+	p.Population += p.NbTilesControlled * 2
 }

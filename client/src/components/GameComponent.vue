@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import container from '@/container/container.ts'
-import { registerServerUpdateHandler } from '@/ws-handler/server-update.handler'
 import GameComponentPresenter from '@/presenter/game-component.presenter'
 
 const gameComponentPresenter: GameComponentPresenter = container.get(GameComponentPresenter)
@@ -15,7 +14,7 @@ onMounted(() => {
     throw new Error('CTX is undefined')
   }
 
-  registerServerUpdateHandler(ctx)
+  gameComponentPresenter.initialize(ctx)
 
   canvas.addEventListener('click', (evt: MouseEvent) => {
     const rect = canvas.getBoundingClientRect()

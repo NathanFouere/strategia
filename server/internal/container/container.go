@@ -102,6 +102,17 @@ func SetupContainer() error {
 
 	err = GetContainer().Provide(func(
 		logger *logger.LoggerService,
+		gameUpdateBroadcaster *broadcaster.GameUpdateBroadcaster,
+		gameStartupUpdateBroadcaster *broadcaster.GameStartupUpdateBroadcaster,
+	) *service.UpdateGameStateService {
+		return service.NewUpdateGameService(logger, gameUpdateBroadcaster, gameStartupUpdateBroadcaster)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing update game service", "err", err)
+	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
 		exitGameHandler *handler.ExitGameHandler,
 		clickHandler *handler.PixelClickHandler,
 		setInWaitingLobbyHandler *handler.SetInWaitingLobbyHandler,
@@ -155,11 +166,28 @@ func SetupContainer() error {
 
 	err = GetContainer().Provide(func(
 		logger *logger.LoggerService,
-		updateGameService *broadcaster.GameUpdateBroadcaster,
+		updateGameStateService *service.UpdateGameStateService,
+		gameRepository *repository.GameRepository,
+	) *service.GameLoopService {
+		return service.NewGameLoopService(
+			logger,
+			updateGameStateService,
+			gameRepository,
+		)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing game loop service", "err", err)
+	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+		gameLoopService *service.GameLoopService,
+		gameRepository *repository.GameRepository,
 	) *service.StartGameService {
 		return service.NewStartGameService(
 			logger,
-			updateGameService,
+			gameLoopService,
+			gameRepository,
 		)
 	})
 	if err != nil {
@@ -217,6 +245,15 @@ func SetupContainer() error {
 	})
 	if err != nil {
 		slog.Error("Error occured while providing main handler", "err", err)
+	}
+
+	err = GetContainer().Provide(func(
+		logger *logger.LoggerService,
+	) *broadcaster.GameStartupUpdateBroadcaster {
+		return broadcaster.NewGameStartupUpdateBroadcaster(logger)
+	})
+	if err != nil {
+		slog.Error("Error occured while providing game startup update broadcaster", "err", err)
 	}
 
 	slog.Info("Container successfully initiated !")

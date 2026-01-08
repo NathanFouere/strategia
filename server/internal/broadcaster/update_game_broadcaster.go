@@ -33,6 +33,10 @@ func (s *GameUpdateBroadcaster) buildTileUpdate(unparsedPos string, unparsedPlay
 
 	player, err := game.FindPlayerOfIdInGame(playerId)
 	if err != nil {
+		err := game.RemovePlayer(playerId)
+		if err != nil {
+			return nil, err
+		}
 		return nil, err
 	}
 	r, g, b, a := player.Color.RGBA()
@@ -53,10 +57,9 @@ func (s *GameUpdateBroadcaster) BroadcastGameState(g *model.Game) error {
 		updates = append(updates, *serverUpdateData)
 	}
 
-	serverUpdatePayload := &ws_exchange.ServerUpdatePayload{
+	data := &ws_exchange.ServerUpdatePayload{
 		ServerUpdateDatas: updates,
 	}
-	data := serverUpdatePayload
 
 	bytes, err := json.Marshal(data.ToWsExchange())
 	if err != nil {
@@ -66,6 +69,6 @@ func (s *GameUpdateBroadcaster) BroadcastGameState(g *model.Game) error {
 	for _, player := range g.Players {
 		player.Client.Send <- bytes
 	}
-	g.TilesToRender = map[string]string{}
+
 	return nil
 }

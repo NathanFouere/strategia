@@ -1,3 +1,3 @@
 export default interface GameUnsubscribePayload {
-  player_id: string;
+  player_id: string
 }

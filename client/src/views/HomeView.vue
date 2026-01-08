@@ -9,7 +9,7 @@ import { onMounted } from 'vue'
 const homeViewPresenter = container.get(HomeViewPresenter)
 
 onMounted(() => {
-  homeViewPresenter.handlePageMounted()
+  homeViewPresenter.initialize()
 })
 
 onUnmounted(() => {
